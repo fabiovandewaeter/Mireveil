@@ -1,6 +1,11 @@
 use color_eyre::Result;
 use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind};
-use ratatui::{Terminal, backend::CrosstermBackend, prelude::*};
+use ratatui::{
+    Terminal,
+    backend::CrosstermBackend,
+    prelude::*,
+    widgets::{Block, Borders},
+};
 
 #[derive(Clone)]
 pub struct Config {
@@ -10,6 +15,7 @@ pub struct Config {
     player_style: Style,
     wall_style: Style,
     floor_style: Style,
+    background_style: Style,
     map_size: (u16, u16),
 }
 
@@ -18,11 +24,12 @@ impl Default for Config {
         Self {
             player_char: "@",
             wall_char: "#",
-            floor_char: ".",
+            floor_char: "·",
             player_style: Style::default().fg(Color::Yellow),
-            wall_style: Style::default().fg(Color::DarkGray),
+            wall_style: Style::default().fg(Color::White),
             floor_style: Style::default().fg(Color::Rgb(50, 50, 50)),
-            map_size: (10000, 10000),
+            background_style: Style::default().bg(Color::Rgb(131, 105, 83)),
+            map_size: (10, 10),
         }
     }
 }
@@ -112,8 +119,14 @@ impl App {
     }
 
     fn draw(&self, frame: &mut Frame) {
-        let config = &self.config;
         let area = frame.area();
+        // Créez un Block avec la couleur d'arrière-plan souhaitée
+        let background = Block::default()
+            .style(self.config.background_style)
+            .borders(Borders::NONE); // vous pouvez choisir d'afficher ou non des bordures
+        // Le widget de fond est dessiné avant les autres widgets pour couvrir toute la zone
+        frame.render_widget(background, area);
+
         let (camera_x, camera_y) = self.calculate_camera(area);
         let buffer = frame.buffer_mut();
 
@@ -122,7 +135,6 @@ impl App {
             for screen_x in 0..area.width {
                 let world_x = camera_x + screen_x as i32;
                 let world_y = camera_y + screen_y as i32;
-
                 let (symbol, style) = self.get_tile_representation(world_x, world_y);
                 let position: Position = Position {
                     x: screen_x,
@@ -135,15 +147,13 @@ impl App {
         }
 
         // Dessiner le joueur
-        let center_x = area.width / 2;
-        let center_y = area.height / 2;
         let position: Position = Position {
-            x: center_x,
-            y: center_y,
+            x: area.width / 2,
+            y: area.height / 2,
         };
         let player_cell = buffer.cell_mut(position).unwrap();
-        player_cell.set_symbol(config.player_char);
-        player_cell.set_style(config.player_style);
+        player_cell.set_symbol(self.config.player_char);
+        player_cell.set_style(self.config.player_style);
     }
 
     fn get_tile_representation(&self, x: i32, y: i32) -> (&'static str, Style) {
