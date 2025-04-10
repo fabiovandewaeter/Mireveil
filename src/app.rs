@@ -7,77 +7,52 @@ use ratatui::{
     widgets::{Block, Borders},
 };
 
+use crate::entities::player::*;
+use crate::map::*;
+
 #[derive(Clone)]
 pub struct Config {
-    player_char: &'static str,
+    //player_char: &'static str,
     wall_char: &'static str,
     floor_char: &'static str,
-    player_style: Style,
+    //player_style: Style,
     wall_style: Style,
     floor_style: Style,
     background_style: Style,
-    map_size: (u16, u16),
 }
 
 impl Default for Config {
     fn default() -> Self {
         Self {
-            player_char: "@",
+            //player_char: "@",
             wall_char: "#",
             floor_char: "·",
-            player_style: Style::default().fg(Color::Yellow),
+            //player_style: Style::default().fg(Color::Yellow),
             wall_style: Style::default().fg(Color::White),
             floor_style: Style::default().fg(Color::Rgb(50, 50, 50)),
             background_style: Style::default().bg(Color::Rgb(131, 105, 83)),
-            map_size: (10, 10),
         }
     }
 }
 
 pub struct App {
-    player_pos: (u16, u16),
-    map: Vec<Vec<bool>>,
+    player: Player,
+    //map: Vec<Vec<bool>>,
+    map: Map,
     config: Config,
     exit: bool,
 }
 
 impl App {
     pub fn new(config: Config) -> Self {
-        let map = vec![vec![false; config.map_size.0 as usize]; config.map_size.1 as usize];
-        let mut app = Self {
-            player_pos: (config.map_size.0 / 2, config.map_size.1 / 2),
+        let map = Map::default();
+        let app = Self {
+            player: Player::new((map.size.0 / 2, map.size.1 / 2)),
             map,
             config,
             exit: false,
         };
-        app.generate_basic_map();
         app
-    }
-
-    fn generate_basic_map(&mut self) {
-        for y in 0..self.config.map_size.1 {
-            for x in 0..self.config.map_size.0 {
-                self.map[y as usize][x as usize] = x == 0
-                    || y == 0
-                    || x == self.config.map_size.0 - 1
-                    || y == self.config.map_size.1 - 1
-                    || (x % 10 == 0 && y % 5 == 0);
-            }
-        }
-    }
-
-    fn move_player(&mut self, dx: i16, dy: i16) {
-        let new_x = self.player_pos.0 as i16 + dx;
-        let new_y = self.player_pos.1 as i16 + dy;
-
-        if new_x >= 0
-            && new_x < self.config.map_size.0 as i16
-            && new_y >= 0
-            && new_y < self.config.map_size.1 as i16
-            && !self.map[new_y as usize][new_x as usize]
-        {
-            self.player_pos = (new_x as u16, new_y as u16);
-        }
     }
 
     pub fn run(mut self, mut terminal: Terminal<CrosstermBackend<std::io::Stdout>>) -> Result<()> {
@@ -86,6 +61,20 @@ impl App {
             self.handle_events()?;
         }
         Ok(())
+    }
+
+    fn move_player(&mut self, dx: i16, dy: i16) {
+        let new_x = self.player.position.0 as i16 + dx;
+        let new_y = self.player.position.1 as i16 + dy;
+
+        if new_x >= 0
+            && new_x < self.map.size.0 as i16
+            && new_y >= 0
+            && new_y < self.map.size.1 as i16
+            && !self.map.cells[new_y as usize][new_x as usize]
+        {
+            self.player.position = (new_x as u16, new_y as u16);
+        }
     }
 
     fn handle_events(&mut self) -> Result<()> {
@@ -111,13 +100,6 @@ impl App {
         }
     }
 
-    fn calculate_camera(&self, area: Rect) -> (i32, i32) {
-        (
-            self.player_pos.0 as i32 - area.width as i32 / 2,
-            self.player_pos.1 as i32 - area.height as i32 / 2,
-        )
-    }
-
     fn draw(&self, frame: &mut Frame) {
         let area = frame.area();
         // Créez un Block avec la couleur d'arrière-plan souhaitée
@@ -127,7 +109,7 @@ impl App {
         // Le widget de fond est dessiné avant les autres widgets pour couvrir toute la zone
         frame.render_widget(background, area);
 
-        let (camera_x, camera_y) = self.calculate_camera(area);
+        let (camera_x, camera_y) = self.player.calculate_camera(area);
         let buffer = frame.buffer_mut();
 
         // Dessiner la carte
@@ -152,19 +134,15 @@ impl App {
             y: area.height / 2,
         };
         let player_cell = buffer.cell_mut(position).unwrap();
-        player_cell.set_symbol(self.config.player_char);
-        player_cell.set_style(self.config.player_style);
+        player_cell.set_symbol(self.player.symbol);
+        player_cell.set_style(self.player.style);
     }
 
     fn get_tile_representation(&self, x: i32, y: i32) -> (&'static str, Style) {
-        if x < 0
-            || y < 0
-            || x >= self.config.map_size.0 as i32
-            || y >= self.config.map_size.1 as i32
-        {
+        if x < 0 || y < 0 || x >= self.map.size.0 as i32 || y >= self.map.size.1 as i32 {
             (self.config.wall_char, self.config.wall_style)
         } else {
-            let is_wall = self.map[y as usize][x as usize];
+            let is_wall = self.map.cells[y as usize][x as usize];
             if is_wall {
                 (self.config.wall_char, self.config.wall_style)
             } else {

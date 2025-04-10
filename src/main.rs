@@ -2,6 +2,8 @@ use app::{App, Config};
 use color_eyre::Result;
 
 mod app;
+mod entities;
+mod map;
 
 fn main() -> Result<()> {
     color_eyre::install()?;
