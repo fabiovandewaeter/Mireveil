@@ -1,13 +1,13 @@
 // main.rs
 use color_eyre::Result;
-use crossterm::event::{self, Event, KeyCode, KeyEventKind};
+use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind};
 use ratatui::{Terminal, backend::CrosstermBackend, prelude::*, widgets::*};
 
 #[derive(Clone)]
 struct Config {
-    player_char: char,
-    wall_char: char,
-    floor_char: char,
+    player_char: &'static str, // Changé pour &'static str
+    wall_char: &'static str,
+    floor_char: &'static str,
     player_style: Style,
     wall_style: Style,
     floor_style: Style,
@@ -17,9 +17,9 @@ struct Config {
 impl Default for Config {
     fn default() -> Self {
         Self {
-            player_char: '@',
-            wall_char: '#',
-            floor_char: '.',
+            player_char: "@",
+            wall_char: "#",
+            floor_char: ".",
             player_style: Style::default().fg(Color::Yellow),
             wall_style: Style::default().fg(Color::DarkGray),
             floor_style: Style::default().fg(Color::Rgb(50, 50, 50)),
@@ -83,68 +83,85 @@ impl App {
     }
 
     fn handle_events(&mut self) -> Result<()> {
+        // Lire tous les événements en attente
         if let Event::Key(key) = event::read()? {
             if key.kind == KeyEventKind::Press {
-                match key.code {
-                    KeyCode::Char('q') => self.exit = true,
-                    KeyCode::Up => self.move_player(0, -1),
-                    KeyCode::Down => self.move_player(0, 1),
-                    KeyCode::Left => self.move_player(-1, 0),
-                    KeyCode::Right => self.move_player(1, 0),
-                    _ => {}
-                }
+                self.process_key(key);
             }
         }
         Ok(())
     }
 
+    fn process_key(&mut self, key: KeyEvent) {
+        if key.kind == KeyEventKind::Press {
+            match key.code {
+                KeyCode::Char('q') => self.exit = true,
+                KeyCode::Up => self.move_player(0, -1),
+                KeyCode::Down => self.move_player(0, 1),
+                KeyCode::Left => self.move_player(-1, 0),
+                KeyCode::Right => self.move_player(1, 0),
+                _ => {}
+            }
+        }
+    }
+
+    fn calculate_camera(&self, area: Rect) -> (i32, i32) {
+        (
+            self.player_pos.0 as i32 - area.width as i32 / 2,
+            self.player_pos.1 as i32 - area.height as i32 / 2,
+        )
+    }
+
     fn draw(&self, frame: &mut Frame) {
         let config = &self.config;
         let area = frame.area();
+        let (camera_x, camera_y) = self.calculate_camera(area);
+        let buffer = frame.buffer_mut();
 
-        let player_x = self.player_pos.0 as i32;
-        let player_y = self.player_pos.1 as i32;
-        let screen_width = area.width as i32;
-        let screen_height = area.height as i32;
-
-        // Calcul de la position de la caméra pour centrer le joueur
-        let camera_x = player_x - screen_width / 2;
-        let camera_y = player_y - screen_height / 2;
-
-        // Dessiner chaque cellule de l'écran
+        // Dessiner la carte
         for screen_y in 0..area.height {
             for screen_x in 0..area.width {
                 let world_x = camera_x + screen_x as i32;
                 let world_y = camera_y + screen_y as i32;
 
-                // Déterminer le caractère et le style
-                let (tile, style) = if world_x < 0
-                    || world_y < 0
-                    || world_x >= config.map_size.0 as i32
-                    || world_y >= config.map_size.1 as i32
-                {
-                    // Hors de la carte : mur
-                    (config.wall_char, config.wall_style)
-                } else {
-                    // Dans la carte
-                    let is_wall = self.map[world_y as usize][world_x as usize];
-                    if is_wall {
-                        (config.wall_char, config.wall_style)
-                    } else {
-                        (config.floor_char, config.floor_style)
-                    }
+                let (symbol, style) = self.get_tile_representation(world_x, world_y);
+                let position: Position = Position {
+                    x: screen_x,
+                    y: screen_y,
                 };
-
-                let block = Paragraph::new(tile.to_string()).style(style);
-                frame.render_widget(block, Rect::new(screen_x, screen_y, 1, 1));
+                let cell = buffer.cell_mut(position).unwrap();
+                cell.set_symbol(symbol);
+                cell.set_style(style);
             }
         }
 
-        // Dessiner le joueur au centre de l'écran
-        let player_screen_x = area.width / 2;
-        let player_screen_y = area.height / 2;
-        let player = Paragraph::new(config.player_char.to_string()).style(config.player_style);
-        frame.render_widget(player, Rect::new(player_screen_x, player_screen_y, 1, 1));
+        // Dessiner le joueur
+        let center_x = area.width / 2;
+        let center_y = area.height / 2;
+        let position: Position = Position {
+            x: center_x,
+            y: center_y,
+        };
+        let player_cell = buffer.cell_mut(position).unwrap();
+        player_cell.set_symbol(config.player_char);
+        player_cell.set_style(config.player_style);
+    }
+
+    fn get_tile_representation(&self, x: i32, y: i32) -> (&'static str, Style) {
+        if x < 0
+            || y < 0
+            || x >= self.config.map_size.0 as i32
+            || y >= self.config.map_size.1 as i32
+        {
+            (self.config.wall_char, self.config.wall_style)
+        } else {
+            let is_wall = self.map[y as usize][x as usize];
+            if is_wall {
+                (self.config.wall_char, self.config.wall_style)
+            } else {
+                (self.config.floor_char, self.config.floor_style)
+            }
+        }
     }
 }
 
