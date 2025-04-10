@@ -37,7 +37,7 @@ struct App {
 
 impl App {
     fn new(config: Config) -> Self {
-        let mut map = vec![vec![false; config.map_size.0 as usize]; config.map_size.1 as usize];
+        let map = vec![vec![false; config.map_size.0 as usize]; config.map_size.1 as usize];
         let mut app = Self {
             player_pos: (config.map_size.0 / 2, config.map_size.1 / 2),
             map,
@@ -100,7 +100,7 @@ impl App {
 
     fn draw(&self, frame: &mut Frame) {
         let config = &self.config;
-        let area = frame.size();
+        let area = frame.area();
 
         let player_x = self.player_pos.0 as i32;
         let player_y = self.player_pos.1 as i32;
