@@ -12,10 +12,8 @@ use crate::map::*;
 
 #[derive(Clone)]
 pub struct Config {
-    //player_char: &'static str,
     wall_char: &'static str,
     floor_char: &'static str,
-    //player_style: Style,
     wall_style: Style,
     floor_style: Style,
     background_style: Style,
@@ -24,10 +22,8 @@ pub struct Config {
 impl Default for Config {
     fn default() -> Self {
         Self {
-            //player_char: "@",
             wall_char: "#",
             floor_char: "·",
-            //player_style: Style::default().fg(Color::Yellow),
             wall_style: Style::default().fg(Color::White),
             floor_style: Style::default().fg(Color::Rgb(50, 50, 50)),
             background_style: Style::default().bg(Color::Rgb(131, 105, 83)),
@@ -37,7 +33,6 @@ impl Default for Config {
 
 pub struct App {
     player: Player,
-    //map: Vec<Vec<bool>>,
     map: Map,
     config: Config,
     exit: bool,
