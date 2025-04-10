@@ -3,7 +3,6 @@ use color_eyre::Result;
 use crossterm::event::{self, Event, KeyCode, KeyEventKind};
 use ratatui::{Terminal, backend::CrosstermBackend, prelude::*, widgets::*};
 
-// Configuration facilement modifiable
 #[derive(Clone)]
 struct Config {
     player_char: char,
@@ -31,19 +30,16 @@ impl Default for Config {
 
 struct App {
     player_pos: (u16, u16),
-    camera_pos: (u16, u16),
-    map: Vec<Vec<bool>>, // true = mur, false = sol
+    map: Vec<Vec<bool>>,
     config: Config,
     exit: bool,
 }
 
 impl App {
     fn new(config: Config) -> Self {
-        let map = vec![vec![false; config.map_size.0 as usize]; config.map_size.1 as usize];
-        // Génération d'une carte basique avec des bords
+        let mut map = vec![vec![false; config.map_size.0 as usize]; config.map_size.1 as usize];
         let mut app = Self {
             player_pos: (config.map_size.0 / 2, config.map_size.1 / 2),
-            camera_pos: (0, 0),
             map,
             config,
             exit: false,
@@ -59,7 +55,7 @@ impl App {
                     || y == 0
                     || x == self.config.map_size.0 - 1
                     || y == self.config.map_size.1 - 1
-                    || (x % 10 == 0 && y % 5 == 0); // Motif arbitraire
+                    || (x % 10 == 0 && y % 5 == 0);
             }
         }
     }
@@ -75,14 +71,7 @@ impl App {
             && !self.map[new_y as usize][new_x as usize]
         {
             self.player_pos = (new_x as u16, new_y as u16);
-            self.update_camera();
         }
-    }
-
-    fn update_camera(&mut self) {
-        // Centre la caméra sur le joueur
-        self.camera_pos.0 = self.player_pos.0.saturating_sub(40); // 80x24 terminal => 40 horizontal
-        self.camera_pos.1 = self.player_pos.1.saturating_sub(12); // 24 vertical
     }
 
     fn run(mut self, mut terminal: Terminal<CrosstermBackend<std::io::Stdout>>) -> Result<()> {
@@ -113,33 +102,45 @@ impl App {
         let config = &self.config;
         let area = frame.size();
 
-        // Calcul de la zone visible
-        let start_x = self.camera_pos.0;
-        let start_y = self.camera_pos.1;
-        let end_x = (start_x + area.width).min(self.config.map_size.0);
-        let end_y = (start_y + area.height).min(self.config.map_size.1);
+        let player_x = self.player_pos.0 as i32;
+        let player_y = self.player_pos.1 as i32;
+        let screen_width = area.width as i32;
+        let screen_height = area.height as i32;
 
-        // Dessin de la carte
-        for y in start_y..end_y {
-            for x in start_x..end_x {
-                let tile = if self.map[y as usize][x as usize] {
-                    config.wall_char
+        // Calcul de la position de la caméra pour centrer le joueur
+        let camera_x = player_x - screen_width / 2;
+        let camera_y = player_y - screen_height / 2;
+
+        // Dessiner chaque cellule de l'écran
+        for screen_y in 0..area.height {
+            for screen_x in 0..area.width {
+                let world_x = camera_x + screen_x as i32;
+                let world_y = camera_y + screen_y as i32;
+
+                // Déterminer le caractère et le style
+                let (tile, style) = if world_x < 0
+                    || world_y < 0
+                    || world_x >= config.map_size.0 as i32
+                    || world_y >= config.map_size.1 as i32
+                {
+                    // Hors de la carte : mur
+                    (config.wall_char, config.wall_style)
                 } else {
-                    config.floor_char
+                    // Dans la carte
+                    let is_wall = self.map[world_y as usize][world_x as usize];
+                    if is_wall {
+                        (config.wall_char, config.wall_style)
+                    } else {
+                        (config.floor_char, config.floor_style)
+                    }
                 };
 
-                let block =
-                    Paragraph::new(tile.to_string()).style(if self.map[y as usize][x as usize] {
-                        config.wall_style
-                    } else {
-                        config.floor_style
-                    });
-
-                frame.render_widget(block, Rect::new(x - start_x, y - start_y, 1, 1));
+                let block = Paragraph::new(tile.to_string()).style(style);
+                frame.render_widget(block, Rect::new(screen_x, screen_y, 1, 1));
             }
         }
 
-        // Dessin du joueur au centre
+        // Dessiner le joueur au centre de l'écran
         let player_screen_x = area.width / 2;
         let player_screen_y = area.height / 2;
         let player = Paragraph::new(config.player_char.to_string()).style(config.player_style);
