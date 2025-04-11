@@ -2,7 +2,7 @@ use app::{App, Config};
 use color_eyre::Result;
 
 mod app;
-mod entities;
+mod game_objects;
 mod map;
 
 fn main() -> Result<()> {

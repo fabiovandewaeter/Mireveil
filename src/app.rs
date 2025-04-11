@@ -7,7 +7,7 @@ use ratatui::{
     widgets::{Block, Borders},
 };
 
-use crate::entities::player::*;
+use crate::game_objects::{GameObject, player::*};
 use crate::map::map::*;
 
 #[derive(Clone)]
@@ -50,23 +50,8 @@ impl App {
         Ok(())
     }
 
-    fn move_player(&mut self, dx: i32, dy: i32) {
-        let new_x = self.player.position.0 + dx;
-        let new_y = self.player.position.1 + dy;
-
-        if let Some(tile) = self.map.get_tile(new_x, new_y) {
-            if !tile.solid {
-                self.player.position = (new_x, new_y);
-                self.map.load_around((
-                    new_x.div_euclid(CHUNK_SIZE as i32),
-                    new_y.div_euclid(CHUNK_SIZE as i32),
-                ));
-            }
-        }
-    }
-
     fn handle_events(&mut self) -> Result<()> {
-        // Lire tous les événements en attente
+        // handle events from buffer
         if let Event::Key(key) = event::read()? {
             if key.kind == KeyEventKind::Press {
                 self.process_key(key);
@@ -79,11 +64,7 @@ impl App {
         if key.kind == KeyEventKind::Press {
             match key.code {
                 KeyCode::Char('q') => self.exit = true,
-                KeyCode::Up => self.move_player(0, -1),
-                KeyCode::Down => self.move_player(0, 1),
-                KeyCode::Left => self.move_player(-1, 0),
-                KeyCode::Right => self.move_player(1, 0),
-                _ => {}
+                _ => self.player.process_key(key.code, &mut self.map),
             }
         }
     }
@@ -120,13 +101,7 @@ impl App {
             }
         }
 
-        // Dessiner le joueur
-        let position: Position = Position {
-            x: area.width / 2,
-            y: area.height / 2,
-        };
-        let player_cell = buffer.cell_mut(position).unwrap();
-        player_cell.set_symbol(self.player.symbol);
-        player_cell.set_style(self.player.style);
+        // draw player
+        self.player.draw(buffer, area);
     }
 }

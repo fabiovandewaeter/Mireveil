@@ -29,6 +29,13 @@ impl TileKind {
             _ => false,
         }
     }
+
+    pub fn block_sight(&self) -> bool {
+        match self {
+            TileKind::Wall => true,
+            _ => false,
+        }
+    }
 }
 
 pub struct Tile {
@@ -36,6 +43,7 @@ pub struct Tile {
     pub symbol: &'static str,
     pub style: Style,
     pub solid: bool,
+    pub block_sight: bool,
 }
 
 impl Tile {
@@ -43,11 +51,13 @@ impl Tile {
         let symbol = kind.symbol();
         let style = kind.style();
         let solid = kind.is_solid();
+        let block_sight = kind.block_sight();
         Self {
             kind,
-            symbol: symbol,
-            style: style,
-            solid: solid,
+            symbol,
+            style,
+            solid,
+            block_sight,
         }
     }
 }
