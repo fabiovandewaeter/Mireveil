@@ -108,6 +108,7 @@ impl Entity {
 
 impl Drawable for Entity {
     fn draw(&self, buffer: &mut Buffer, area: Rect) {
+        todo!("CHANGE POSITION COORDINATES FOR OTHER ENTITIES");
         //let position: Position = Position { x: 0, y: 0 };
         let position: Position = Position {
             x: area.width / 2,
