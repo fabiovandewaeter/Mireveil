@@ -7,8 +7,7 @@ use ratatui::{
     widgets::{Block, Borders},
 };
 
-use crate::game_objects::{GameObject, player::*};
-use crate::map::map::*;
+use crate::{map::map::*, systems::entity_manager::EntityManager};
 
 #[derive(Clone)]
 pub struct Config {
@@ -24,22 +23,20 @@ impl Default for Config {
 }
 
 pub struct App {
-    player: Player,
     map: Map,
+    entity_manager: EntityManager,
     config: Config,
     exit: bool,
 }
 
 impl App {
     pub fn new(config: Config) -> Self {
-        let map = Map::default();
-        let app = Self {
-            player: Player::new((map.size.0 / 2, map.size.1 / 2)),
-            map,
+        Self {
+            map: Map::default(),
+            entity_manager: EntityManager::new(),
             config,
             exit: false,
-        };
-        app
+        }
     }
 
     pub fn run(mut self, mut terminal: Terminal<CrosstermBackend<std::io::Stdout>>) -> Result<()> {
@@ -63,7 +60,8 @@ impl App {
         if key.kind == KeyEventKind::Press {
             match key.code {
                 KeyCode::Char('q') => self.exit = true,
-                _ => self.player.process_key(key.code, &mut self.map),
+                //_ => self.player.process_key(key.code, &mut self.map),
+                _ => self.entity_manager.process_key(key.code, &mut self.map),
             }
         }
     }
@@ -77,13 +75,14 @@ impl App {
             .borders(Borders::NONE);
         frame.render_widget(background, area);
 
-        let (camera_x, camera_y) = self.player.calculate_camera(area);
+        //let (camera_x, camera_y) = self.player.calculate_camera(area);
         let buffer = frame.buffer_mut();
 
         // draw map
+        let (camera_x, camera_y) = self.entity_manager.player.calculate_camera(area);
         self.map.draw(buffer, area, camera_x, camera_y);
 
-        // draw player
-        //self.player.draw(buffer, area);
+        // draw entities
+        self.entity_manager.draw(buffer, area);
     }
 }

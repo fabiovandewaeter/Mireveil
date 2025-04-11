@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use crossterm::event::KeyCode;
 use ratatui::{
     buffer::Buffer,
     layout::{Position, Rect},
@@ -45,25 +46,9 @@ impl Chunk {
     }
 }
 
-/*impl Default for Chunk {
-    fn default() -> Self {
-        let mut chunk = Self::new();
-        // add walls
-        for y in 0..CHUNK_SIZE {
-            for x in 0..CHUNK_SIZE {
-                if x == 0 || y == 0 || x == CHUNK_SIZE - 1 || y == CHUNK_SIZE - 1 {
-                    chunk.tiles[y as usize][x as usize] = Tile::new(TileKind::Wall);
-                }
-            }
-        }
-        chunk
-    }
-}*/
-
 pub struct Map {
     pub chunks: HashMap<(i32, i32), Chunk>,
     pub size: (i32, i32),
-    pub entity_manager: EntityManager,
 }
 
 impl Map {
@@ -71,7 +56,6 @@ impl Map {
         Self {
             chunks: HashMap::new(),
             size: MAP_SIZE,
-            entity_manager: EntityManager::new(),
         }
     }
 
