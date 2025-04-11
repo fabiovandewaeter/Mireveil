@@ -7,7 +7,7 @@ use ratatui::{
     widgets::{Block, Borders},
 };
 
-use crate::{map::map::*, systems::entity_manager::EntityManager};
+use crate::{game_objects::entity::Entity, map::map::*, systems::entity_manager::EntityManager};
 
 #[derive(Clone)]
 pub struct Config {
@@ -61,9 +61,16 @@ impl App {
             match key.code {
                 KeyCode::Char('q') => self.exit = true,
                 //_ => self.player.process_key(key.code, &mut self.map),
-                _ => self.entity_manager.process_key(key.code, &mut self.map),
+                _ => self.entity_manager.update(key.code, &mut self.map),
             }
         }
+    }
+
+    pub fn calculate_camera(&self, player: &Entity, area: Rect) -> (i32, i32) {
+        (
+            player.position.0 as i32 - area.width as i32 / 2,
+            player.position.1 as i32 - area.height as i32 / 2,
+        )
     }
 
     fn draw(&self, frame: &mut Frame) {
@@ -79,7 +86,7 @@ impl App {
         let buffer = frame.buffer_mut();
 
         // draw map
-        let (camera_x, camera_y) = self.entity_manager.player.calculate_camera(area);
+        let (camera_x, camera_y) = self.calculate_camera(&self.entity_manager.player, area);
         self.map.draw(buffer, area, camera_x, camera_y);
 
         // draw entities

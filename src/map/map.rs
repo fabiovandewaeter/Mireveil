@@ -1,18 +1,13 @@
 use std::collections::HashMap;
 
-use crossterm::event::KeyCode;
 use ratatui::{
     buffer::Buffer,
     layout::{Position, Rect},
     style::{Color, Style},
 };
 
-use crate::systems::entity_manager::EntityManager;
-
 use super::tile::{Tile, TileKind};
 
-// size in chunks
-pub const MAP_SIZE: (i32, i32) = (10, 10);
 // size in tiles
 pub const CHUNK_SIZE: u16 = 32;
 // distance in chunk chunks are loaded
@@ -29,7 +24,7 @@ impl Chunk {
             .map(|x| {
                 (0..CHUNK_SIZE)
                     .map(|y| {
-                        if x % 10 == 0 && y % 5 == 0 {
+                        if x % 10 == 1 && y % 5 == 1 {
                             Tile::new(TileKind::Wall)
                         } else {
                             Tile::new(TileKind::Grass)
@@ -48,14 +43,12 @@ impl Chunk {
 
 pub struct Map {
     pub chunks: HashMap<(i32, i32), Chunk>,
-    pub size: (i32, i32),
 }
 
 impl Map {
     pub fn new() -> Self {
         Self {
             chunks: HashMap::new(),
-            size: MAP_SIZE,
         }
     }
 

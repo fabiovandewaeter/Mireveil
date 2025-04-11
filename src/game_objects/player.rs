@@ -7,7 +7,7 @@ use ratatui::{
 
 use crate::map::map::{CHUNK_SIZE, Map};
 
-use super::game_object::GameObject;
+use super::entity::Drawable;
 
 const SYMBOL: &'static str = "@";
 const SYMBOL_COLOR: Color = Color::Yellow;
@@ -16,6 +16,10 @@ pub struct Player {
     pub position: (i32, i32),
     symbol: &'static str,
     style: Style,
+}
+
+pub trait Playable {
+    fn process_key(&mut self, key_code: KeyCode, map: &mut Map);
 }
 
 impl Player {
@@ -51,21 +55,7 @@ impl Player {
     }
 }
 
-impl GameObject for Player {
-    fn process_key(&mut self, key_code: KeyCode, map: &mut Map) {
-        match key_code {
-            KeyCode::Up => self.handle_move(0, -1, map),
-            KeyCode::Down => self.handle_move(0, 1, map),
-            KeyCode::Left => self.handle_move(-1, 0, map),
-            KeyCode::Right => self.handle_move(1, 0, map),
-            _ => {}
-        }
-    }
-
-    fn update(&self) {
-        todo!()
-    }
-
+impl Drawable for Player {
     fn draw(&self, buffer: &mut Buffer, area: Rect) {
         let position: Position = Position {
             x: area.width / 2,
@@ -74,5 +64,17 @@ impl GameObject for Player {
         let player_cell = buffer.cell_mut(position).unwrap();
         player_cell.set_symbol(self.symbol);
         player_cell.set_style(self.style);
+    }
+}
+
+impl Playable for Player {
+    fn process_key(&mut self, key_code: KeyCode, map: &mut Map) {
+        match key_code {
+            KeyCode::Up => self.handle_move(0, -1, map),
+            KeyCode::Down => self.handle_move(0, 1, map),
+            KeyCode::Left => self.handle_move(-1, 0, map),
+            KeyCode::Right => self.handle_move(1, 0, map),
+            _ => {}
+        }
     }
 }
