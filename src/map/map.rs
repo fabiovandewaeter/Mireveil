@@ -1,5 +1,13 @@
 use std::collections::HashMap;
 
+use ratatui::{
+    buffer::Buffer,
+    layout::{Position, Rect},
+    style::{Color, Style},
+};
+
+use crate::systems::entity_manager::EntityManager;
+
 use super::tile::{Tile, TileKind};
 
 // size in chunks
@@ -55,6 +63,7 @@ impl Chunk {
 pub struct Map {
     pub chunks: HashMap<(i32, i32), Chunk>,
     pub size: (i32, i32),
+    pub entity_manager: EntityManager,
 }
 
 impl Map {
@@ -62,6 +71,7 @@ impl Map {
         Self {
             chunks: HashMap::new(),
             size: MAP_SIZE,
+            entity_manager: EntityManager::new(),
         }
     }
 
@@ -93,6 +103,26 @@ impl Map {
             .get(&(chunk_x, chunk_y))
             .and_then(|chunk| chunk.tiles.get(local_y))
             .and_then(|row| row.get(local_x))
+    }
+
+    pub fn draw(&self, buffer: &mut Buffer, area: Rect, camera_x: i32, camera_y: i32) {
+        for screen_y in 0..area.height {
+            for screen_x in 0..area.width {
+                let world_x = camera_x + screen_x as i32;
+                let world_y = camera_y + screen_y as i32;
+                let (symbol, style) = self
+                    .get_tile(world_x, world_y)
+                    .map(|tile| (tile.symbol, tile.style))
+                    .unwrap_or(("#", Style::default().fg(Color::Red)));
+                let position: Position = Position {
+                    x: screen_x,
+                    y: screen_y,
+                };
+                let cell = buffer.cell_mut(position).unwrap();
+                cell.set_symbol(symbol);
+                cell.set_style(style);
+            }
+        }
     }
 }
 

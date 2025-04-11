@@ -4,6 +4,7 @@ use color_eyre::Result;
 mod app;
 mod game_objects;
 mod map;
+mod systems;
 
 fn main() -> Result<()> {
     color_eyre::install()?;

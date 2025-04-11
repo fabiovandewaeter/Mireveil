@@ -51,7 +51,6 @@ impl App {
     }
 
     fn handle_events(&mut self) -> Result<()> {
-        // handle events from buffer
         if let Event::Key(key) = event::read()? {
             if key.kind == KeyEventKind::Press {
                 self.process_key(key);
@@ -82,26 +81,9 @@ impl App {
         let buffer = frame.buffer_mut();
 
         // draw map
-        for screen_y in 0..area.height {
-            for screen_x in 0..area.width {
-                let world_x = camera_x + screen_x as i32;
-                let world_y = camera_y + screen_y as i32;
-                let (symbol, style) = self
-                    .map
-                    .get_tile(world_x, world_y)
-                    .map(|tile| (tile.symbol, tile.style))
-                    .unwrap_or(("#", Style::default().fg(Color::Red)));
-                let position: Position = Position {
-                    x: screen_x,
-                    y: screen_y,
-                };
-                let cell = buffer.cell_mut(position).unwrap();
-                cell.set_symbol(symbol);
-                cell.set_style(style);
-            }
-        }
+        self.map.draw(buffer, area, camera_x, camera_y);
 
         // draw player
-        self.player.draw(buffer, area);
+        //self.player.draw(buffer, area);
     }
 }
