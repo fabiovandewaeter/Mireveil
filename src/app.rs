@@ -8,24 +8,16 @@ use ratatui::{
 };
 
 use crate::entities::player::*;
-use crate::map::*;
+use crate::map::map::*;
 
 #[derive(Clone)]
 pub struct Config {
-    wall_char: &'static str,
-    floor_char: &'static str,
-    wall_style: Style,
-    floor_style: Style,
     background_style: Style,
 }
 
 impl Default for Config {
     fn default() -> Self {
         Self {
-            wall_char: "#",
-            floor_char: "·",
-            wall_style: Style::default().fg(Color::White),
-            floor_style: Style::default().fg(Color::Rgb(50, 50, 50)),
             background_style: Style::default().bg(Color::Rgb(131, 105, 83)),
         }
     }
@@ -58,17 +50,18 @@ impl App {
         Ok(())
     }
 
-    fn move_player(&mut self, dx: i16, dy: i16) {
-        let new_x = self.player.position.0 as i16 + dx;
-        let new_y = self.player.position.1 as i16 + dy;
+    fn move_player(&mut self, dx: i32, dy: i32) {
+        let new_x = self.player.position.0 + dx;
+        let new_y = self.player.position.1 + dy;
 
-        if new_x >= 0
-            && new_x < self.map.size.0 as i16
-            && new_y >= 0
-            && new_y < self.map.size.1 as i16
-            && !self.map.cells[new_y as usize][new_x as usize]
-        {
-            self.player.position = (new_x as u16, new_y as u16);
+        if let Some(tile) = self.map.get_tile(new_x, new_y) {
+            if !tile.solid {
+                self.player.position = (new_x, new_y);
+                self.map.load_around((
+                    new_x.div_euclid(CHUNK_SIZE as i32),
+                    new_y.div_euclid(CHUNK_SIZE as i32),
+                ));
+            }
         }
     }
 
@@ -97,22 +90,26 @@ impl App {
 
     fn draw(&self, frame: &mut Frame) {
         let area = frame.area();
-        // Créez un Block avec la couleur d'arrière-plan souhaitée
+
+        // draw background color
         let background = Block::default()
             .style(self.config.background_style)
-            .borders(Borders::NONE); // vous pouvez choisir d'afficher ou non des bordures
-        // Le widget de fond est dessiné avant les autres widgets pour couvrir toute la zone
+            .borders(Borders::NONE);
         frame.render_widget(background, area);
 
         let (camera_x, camera_y) = self.player.calculate_camera(area);
         let buffer = frame.buffer_mut();
 
-        // Dessiner la carte
+        // draw map
         for screen_y in 0..area.height {
             for screen_x in 0..area.width {
                 let world_x = camera_x + screen_x as i32;
                 let world_y = camera_y + screen_y as i32;
-                let (symbol, style) = self.get_tile_representation(world_x, world_y);
+                let (symbol, style) = self
+                    .map
+                    .get_tile(world_x, world_y)
+                    .map(|tile| (tile.symbol, tile.style))
+                    .unwrap_or(("#", Style::default().fg(Color::Red)));
                 let position: Position = Position {
                     x: screen_x,
                     y: screen_y,
@@ -131,18 +128,5 @@ impl App {
         let player_cell = buffer.cell_mut(position).unwrap();
         player_cell.set_symbol(self.player.symbol);
         player_cell.set_style(self.player.style);
-    }
-
-    fn get_tile_representation(&self, x: i32, y: i32) -> (&'static str, Style) {
-        if x < 0 || y < 0 || x >= self.map.size.0 as i32 || y >= self.map.size.1 as i32 {
-            (self.config.wall_char, self.config.wall_style)
-        } else {
-            let is_wall = self.map.cells[y as usize][x as usize];
-            if is_wall {
-                (self.config.wall_char, self.config.wall_style)
-            } else {
-                (self.config.floor_char, self.config.floor_style)
-            }
-        }
     }
 }

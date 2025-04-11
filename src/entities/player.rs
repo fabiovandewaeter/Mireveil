@@ -7,13 +7,13 @@ const SYMBOL: &'static str = "@";
 const SYMBOL_COLOR: Color = Color::Yellow;
 
 pub struct Player {
-    pub position: (u16, u16),
+    pub position: (i32, i32),
     pub symbol: &'static str,
     pub style: Style,
 }
 
 impl Player {
-    pub fn new(position: (u16, u16)) -> Self {
+    pub fn new(position: (i32, i32)) -> Self {
         Self {
             position,
             symbol: SYMBOL,
