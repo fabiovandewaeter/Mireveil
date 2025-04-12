@@ -7,7 +7,11 @@ use ratatui::{
     widgets::{Block, Borders},
 };
 
-use crate::{game_objects::entity::Entity, map::map::*, systems::entity_manager::EntityManager};
+use crate::{
+    game_objects::entity::{Controller, Entity, EntityKind},
+    map::map::*,
+    systems::entity_manager::{self, EntityManager},
+};
 
 #[derive(Clone)]
 pub struct Config {
@@ -31,9 +35,15 @@ pub struct App {
 
 impl App {
     pub fn new(config: Config) -> Self {
+        let mut entity_manager = EntityManager::new();
+        entity_manager.add_entity(Box::new(Entity::new(
+            EntityKind::Dragon,
+            (0, 1),
+            Controller::AI,
+        )));
         Self {
             map: Map::default(),
-            entity_manager: EntityManager::new(),
+            entity_manager: entity_manager,
             config,
             exit: false,
         }
@@ -66,10 +76,10 @@ impl App {
         }
     }
 
-    pub fn calculate_camera(&self, player: &Entity, area: Rect) -> (i32, i32) {
+    pub fn calculate_camera_position(&self, player: &Entity, area: Rect) -> (i32, i32) {
         (
-            player.position.0 as i32 - area.width as i32 / 2,
-            player.position.1 as i32 - area.height as i32 / 2,
+            player.position.0 - (area.width as i32 / 2),
+            player.position.1 - (area.height as i32 / 2),
         )
     }
 
@@ -85,11 +95,13 @@ impl App {
         //let (camera_x, camera_y) = self.player.calculate_camera(area);
         let buffer = frame.buffer_mut();
 
+        // center the camera on player
         // draw map
-        let (camera_x, camera_y) = self.calculate_camera(&self.entity_manager.player, area);
-        self.map.draw(buffer, area, camera_x, camera_y);
+        let (camera_x, camera_y) =
+            self.calculate_camera_position(&self.entity_manager.player, area);
+        self.map.draw(buffer, area, (camera_x, camera_y));
 
         // draw entities
-        self.entity_manager.draw(buffer, area);
+        self.entity_manager.draw(buffer, area, (camera_x, camera_y));
     }
 }

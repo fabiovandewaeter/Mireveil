@@ -31,10 +31,10 @@ impl EntityManager {
         }
     }
 
-    pub fn draw(&self, buffer: &mut Buffer, area: Rect) {
+    pub fn draw(&self, buffer: &mut Buffer, area: Rect, camera_position: (i32, i32)) {
         for entity in self.entities.iter() {
-            entity.draw(buffer, area);
+            entity.draw(buffer, area, camera_position);
         }
-        self.player.draw(buffer, area);
+        self.player.draw(buffer, area, camera_position);
     }
 }

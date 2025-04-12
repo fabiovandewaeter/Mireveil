@@ -8,7 +8,7 @@ use ratatui::{
 use crate::map::map::{CHUNK_SIZE, Map};
 
 pub trait Drawable {
-    fn draw(&self, buffer: &mut Buffer, area: Rect);
+    fn draw(&self, buffer: &mut Buffer, area: Rect, camera_position: (i32, i32));
 }
 
 pub enum EntityKind {
@@ -39,7 +39,7 @@ impl EntityKind {
 #[derive(Copy, Clone)]
 pub enum Controller {
     Player,
-    // todo: AI
+    AI,
 }
 
 impl Controller {
@@ -50,6 +50,7 @@ impl Controller {
                     self.handle_player_input(entity, key_code, map);
                 }
             }
+            Controller::AI => {}
         }
     }
 
@@ -107,15 +108,23 @@ impl Entity {
 }
 
 impl Drawable for Entity {
-    fn draw(&self, buffer: &mut Buffer, area: Rect) {
-        todo!("CHANGE POSITION COORDINATES FOR OTHER ENTITIES");
-        //let position: Position = Position { x: 0, y: 0 };
-        let position: Position = Position {
-            x: area.width / 2,
-            y: area.height / 2,
-        };
-        let player_cell = buffer.cell_mut(position).unwrap();
-        player_cell.set_symbol(self.symbol);
-        player_cell.set_style(self.style);
+    fn draw(&self, buffer: &mut Buffer, area: Rect, camera_position: (i32, i32)) {
+        let screen_x = self.position.0 - camera_position.0;
+        let screen_y = self.position.1 - camera_position.1;
+
+        // only draw if the Entity is close enough to the camera
+        if screen_x >= 0
+            && screen_x < area.width as i32
+            && screen_y >= 0
+            && screen_y < area.height as i32
+        {
+            let position: Position = Position {
+                x: screen_x as u16,
+                y: screen_y as u16,
+            };
+            let cell = buffer.cell_mut(position).unwrap();
+            cell.set_symbol(self.symbol);
+            cell.set_style(self.style);
+        }
     }
 }

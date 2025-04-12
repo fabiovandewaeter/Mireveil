@@ -82,11 +82,11 @@ impl Map {
             .and_then(|row| row.get(local_x))
     }
 
-    pub fn draw(&self, buffer: &mut Buffer, area: Rect, camera_x: i32, camera_y: i32) {
+    pub fn draw(&self, buffer: &mut Buffer, area: Rect, camera_position: (i32, i32)) {
         for screen_y in 0..area.height {
             for screen_x in 0..area.width {
-                let world_x = camera_x + screen_x as i32;
-                let world_y = camera_y + screen_y as i32;
+                let world_x = camera_position.0 + screen_x as i32;
+                let world_y = camera_position.1 + screen_y as i32;
                 let (symbol, style) = self
                     .get_tile(world_x, world_y)
                     .map(|tile| (tile.symbol, tile.style))
