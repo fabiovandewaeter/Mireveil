@@ -28,8 +28,8 @@ impl EntityKind {
 
     pub fn style(&self) -> Style {
         match self {
-            EntityKind::Human => Style::default().fg(Color::White),
-            EntityKind::Dragon => Style::default().fg(Color::Red),
+            EntityKind::Human => Style::default().fg(Color::Rgb(255, 255, 255)),
+            EntityKind::Dragon => Style::default().fg(Color::Rgb(255, 0, 0)),
             EntityKind::Sheep => Style::default().fg(Color::Rgb(255, 209, 223)),
         }
     }

@@ -1,10 +1,12 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use ratatui::{
     buffer::Buffer,
     layout::{Position, Rect},
     style::{Color, Style},
 };
+
+use crate::systems::camera::style_to_greyscale;
 
 use super::tile::{Tile, TileKind};
 
@@ -43,12 +45,18 @@ impl Chunk {
 
 pub struct Map {
     pub chunks: HashMap<(i32, i32), Chunk>,
+    // coordinates of tiles that will be drawn
+    pub visible_tiles: HashSet<(i32, i32)>,
+    // coordinates of tiles that were seen and will be drawn in black and white
+    pub revealed_tiles: HashSet<(i32, i32)>,
 }
 
 impl Map {
     pub fn new() -> Self {
         Self {
             chunks: HashMap::new(),
+            visible_tiles: HashSet::new(),
+            revealed_tiles: HashSet::new(),
         }
     }
 
@@ -87,10 +95,25 @@ impl Map {
             for screen_x in 0..area.width {
                 let world_x = camera_position.0 + screen_x as i32;
                 let world_y = camera_position.1 + screen_y as i32;
-                let (symbol, style) = self
-                    .get_tile(world_x, world_y)
-                    .map(|tile| (tile.symbol, tile.style))
-                    .unwrap_or(("#", Style::default().fg(Color::Red)));
+                let pos = (world_x, world_y);
+                let (symbol, style) = if let Some(tile) = self.get_tile(world_x, world_y) {
+                    if self.visible_tiles.contains(&pos) {
+                        // if tile is visible, use its symbol
+                        (tile.symbol, tile.style)
+                    } else if self.revealed_tiles.contains(&pos) {
+                        // if tile is not visible, use grayed-out version of its symbol
+                        (
+                            tile.symbol,
+                            tile.style.patch(style_to_greyscale(tile.color)),
+                        )
+                    } else {
+                        // if not revealed, draw empty tile
+                        (" ", Style::default())
+                    }
+                } else {
+                    ("#", Style::default().fg(Color::Red))
+                };
+
                 let position: Position = Position {
                     x: screen_x,
                     y: screen_y,

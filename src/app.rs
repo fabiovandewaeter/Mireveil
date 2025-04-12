@@ -95,7 +95,6 @@ impl App {
         //let (camera_x, camera_y) = self.player.calculate_camera(area);
         let buffer = frame.buffer_mut();
 
-        // center the camera on player
         // draw map
         let (camera_x, camera_y) =
             self.calculate_camera_position(&self.entity_manager.player, area);

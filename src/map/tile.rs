@@ -15,11 +15,19 @@ impl TileKind {
         }
     }
 
+    pub fn color(&self) -> Color {
+        match self {
+            TileKind::Wall => Color::Rgb(255, 255, 255),
+            TileKind::Grass => Color::Rgb(0, 255, 0),
+            TileKind::Water => Color::Rgb(0, 0, 255),
+        }
+    }
+
     pub fn style(&self) -> Style {
         match self {
-            TileKind::Wall => Style::default().fg(Color::White),
-            TileKind::Grass => Style::default().fg(Color::Green),
-            TileKind::Water => Style::default().fg(Color::Blue),
+            TileKind::Wall => Style::default().fg(self.color()),
+            TileKind::Grass => Style::default().fg(self.color()),
+            TileKind::Water => Style::default().fg(self.color()),
         }
     }
 
@@ -42,6 +50,7 @@ pub struct Tile {
     kind: TileKind,
     pub symbol: &'static str,
     pub style: Style,
+    pub color: Color,
     pub solid: bool,
     pub block_sight: bool,
 }
@@ -50,12 +59,14 @@ impl Tile {
     pub fn new(kind: TileKind) -> Self {
         let symbol = kind.symbol();
         let style = kind.style();
+        let color = kind.color();
         let solid = kind.is_solid();
         let block_sight = kind.block_sight();
         Self {
             kind,
             symbol,
             style,
+            color,
             solid,
             block_sight,
         }
