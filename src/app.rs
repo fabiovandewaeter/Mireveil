@@ -10,7 +10,7 @@ use ratatui::{
 use crate::{
     game_objects::entity::{Controller, Entity, EntityKind},
     map::map::*,
-    systems::entity_manager::{self, EntityManager},
+    systems::entity_manager::EntityManager,
 };
 
 #[derive(Clone)]
@@ -21,7 +21,8 @@ pub struct Config {
 impl Default for Config {
     fn default() -> Self {
         Self {
-            background_style: Style::default().bg(Color::Rgb(131, 105, 83)),
+            //background_style: Style::default().bg(Color::Rgb(131, 105, 83)),
+            background_style: Style::default().bg(Color::Rgb(83, 69, 60)),
         }
     }
 }
@@ -39,6 +40,11 @@ impl App {
         entity_manager.add_entity(Box::new(Entity::new(
             EntityKind::Dragon,
             (0, 1),
+            Controller::AI,
+        )));
+        entity_manager.add_entity(Box::new(Entity::new(
+            EntityKind::Sheep,
+            (1, 0),
             Controller::AI,
         )));
         Self {

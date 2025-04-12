@@ -22,7 +22,7 @@ impl EntityKind {
         match self {
             EntityKind::Human => "@",
             EntityKind::Dragon => "D",
-            EntityKind::Sheep => "s",
+            EntityKind::Sheep => "S",
         }
     }
 

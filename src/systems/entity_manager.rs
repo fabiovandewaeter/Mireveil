@@ -27,7 +27,7 @@ impl EntityManager {
 
     pub fn update(&mut self, key_code: KeyCode, map: &mut Map) {
         self.player.update(Some(key_code), map);
-        update_visibility(self.player.position, 18, map);
+        update_visibility(self.player.position, 50, map);
         for entity in &mut self.entities {
             entity.update(None, map);
         }

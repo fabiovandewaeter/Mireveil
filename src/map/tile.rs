@@ -17,8 +17,10 @@ impl TileKind {
 
     pub fn color(&self) -> Color {
         match self {
-            TileKind::Wall => Color::Rgb(255, 255, 255),
-            TileKind::Grass => Color::Rgb(0, 255, 0),
+            //TileKind::Wall => Color::Rgb(255, 255, 255),
+            TileKind::Wall => Color::Rgb(150, 150, 150),
+            //TileKind::Grass => Color::Rgb(0, 255, 0),
+            TileKind::Grass => Color::Rgb(26, 172, 59),
             TileKind::Water => Color::Rgb(0, 0, 255),
         }
     }
