@@ -4,7 +4,7 @@ use ratatui::{
     Terminal,
     backend::CrosstermBackend,
     prelude::*,
-    widgets::{Block, Borders},
+    widgets::{Block, Borders, Clear},
 };
 
 use crate::{
@@ -21,9 +21,10 @@ pub struct Config {
 impl Default for Config {
     fn default() -> Self {
         Self {
-            background_style: Style::default().bg(Color::Rgb(30, 26, 21)),
-            //background_style: Style::default().bg(Color::Rgb(124, 108, 88)),
-            //background_style: Style::default().bg(Color::Rgb(19,13,6)),
+            // brown
+            //background_style: Style::default().bg(Color::Rgb(30, 26, 21)),
+            // blue
+            background_style: Style::default().bg(Color::Rgb(30, 30, 40)),
         }
     }
 }
@@ -33,6 +34,7 @@ pub struct App {
     entity_manager: EntityManager,
     config: Config,
     exit: bool,
+    inventory_visible: bool,
 }
 
 impl App {
@@ -53,6 +55,7 @@ impl App {
             entity_manager: entity_manager,
             config,
             exit: false,
+            inventory_visible: false,
         }
     }
 
@@ -77,7 +80,7 @@ impl App {
         if key.kind == KeyEventKind::Press {
             match key.code {
                 KeyCode::Char('q') => self.exit = true,
-                //_ => self.player.process_key(key.code, &mut self.map),
+                KeyCode::Char('e') => self.inventory_visible = !self.inventory_visible, // Toggle inventaire
                 _ => self.entity_manager.update(key.code, &mut self.map),
             }
         }
@@ -88,6 +91,27 @@ impl App {
             player.position.0 - (area.width as i32 / 2),
             player.position.1 - (area.height as i32 / 2),
         )
+    }
+
+    fn draw_inventory(&self, frame: &mut Frame, area: Rect) {
+        // zone where the widget will be drawn
+        let width = (area.width * 3) / 10;
+        let inventory_area = Rect::new(area.right() - width, area.y, width, area.height);
+
+        // clear the zone on the screen
+        frame.render_widget(Clear, inventory_area);
+
+        // Inventory widget
+        let block = Block::default()
+            .title(" Inventory ")
+            .borders(Borders::ALL)
+            .border_style(Style::new().light_red())
+            .title_style(Style::new().white().bold())
+            .style(Style::new().bg(Color::Rgb(30, 30, 40)));
+
+        frame.render_widget(block, inventory_area);
+
+        // TODO: add inventory content
     }
 
     fn draw(&self, frame: &mut Frame) {
@@ -109,5 +133,10 @@ impl App {
 
         // draw entities
         self.entity_manager.draw(buffer, area, (camera_x, camera_y));
+
+        // draw inventory
+        if self.inventory_visible {
+            self.draw_inventory(frame, area);
+        }
     }
 }
