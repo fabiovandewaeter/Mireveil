@@ -10,7 +10,8 @@ impl TileKind {
     pub fn symbol(&self) -> &'static str {
         match self {
             TileKind::Wall => "#",
-            TileKind::Grass => "·",
+            //TileKind::Grass => "·",
+            TileKind::Grass => ",",
             TileKind::Water => "~",
         }
     }
@@ -18,7 +19,7 @@ impl TileKind {
     pub fn color(&self) -> Color {
         match self {
             TileKind::Wall => Color::Rgb(150, 150, 150),
-            TileKind::Grass => Color::Rgb(26, 172, 59),
+            TileKind::Grass => Color::Rgb(0, 102, 0),
             TileKind::Water => Color::Rgb(51, 102, 204),
         }
     }

@@ -33,6 +33,39 @@ impl EntityKind {
             EntityKind::Sheep => Style::default().fg(Color::Rgb(255, 209, 223)),
         }
     }
+
+    pub fn stats(&self) -> EntityStats {
+        match self {
+            EntityKind::Human => EntityStats {
+                max_hp: 100,
+                hp: 100,
+                max_mana: 100,
+                mana: 100,
+                defense: 5,
+                strength: 5,
+                magic: 5,
+            },
+            EntityKind::Dragon => EntityStats {
+                max_hp: 1000,
+                hp: 1000,
+                max_mana: 200,
+                mana: 200,
+                defense: 50,
+                strength: 50,
+                magic: 20,
+            },
+            EntityKind::Sheep => EntityStats {
+                max_hp: 30,
+                hp: 30,
+                max_mana: 0,
+                mana: 0,
+                defense: 5,
+                strength: 1,
+                magic: 0,
+            },
+            _ => EntityStats::default(),
+        }
+    }
 }
 
 // who controls the Entity
@@ -55,20 +88,13 @@ impl Controller {
     }
 
     fn handle_player_input(&self, entity: &mut Entity, key_code: KeyCode, map: &mut Map) {
-        let mut dx = 0;
-        let mut dy = 0;
-        if (key_code == KeyCode::Up) {
-            dy -= 1;
-        }
-        if (key_code == KeyCode::Down) {
-            dy += 1;
-        }
-        if (key_code == KeyCode::Left) {
-            dx -= 1;
-        }
-        if (key_code == KeyCode::Right) {
-            dx += 1;
-        }
+        let (dx, dy) = match key_code {
+            KeyCode::Up => (0, -1),
+            KeyCode::Down => (0, 1),
+            KeyCode::Left => (-1, 0),
+            KeyCode::Right => (1, 0),
+            _ => (0, 0),
+        };
 
         let new_x = entity.position.0 + dx;
         let new_y = entity.position.1 + dy;
@@ -85,12 +111,37 @@ impl Controller {
     }
 }
 
+pub struct EntityStats {
+    pub max_hp: u32,
+    pub hp: u32,
+    pub max_mana: u32,
+    pub mana: u32,
+    pub defense: u32,
+    pub strength: u32,
+    pub magic: u32,
+}
+
+impl Default for EntityStats {
+    fn default() -> Self {
+        Self {
+            max_hp: 10,
+            hp: 10,
+            max_mana: 10,
+            mana: 10,
+            defense: 0,
+            strength: 1,
+            magic: 1,
+        }
+    }
+}
+
 pub struct Entity {
     kind: EntityKind,
     pub position: (i32, i32),
     pub symbol: &'static str,
     pub style: Style,
     pub controller: Controller,
+    pub stats: EntityStats,
 }
 
 impl Entity {
@@ -100,6 +151,7 @@ impl Entity {
             symbol: kind.symbol(),
             style: kind.style(),
             controller,
+            stats: kind.stats(),
             kind,
         }
     }
