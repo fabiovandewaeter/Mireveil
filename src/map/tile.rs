@@ -1,5 +1,6 @@
 use ratatui::style::{Color, Style};
 
+#[derive(Clone)]
 pub enum TileKind {
     Wall,
     Grass,
@@ -47,6 +48,7 @@ impl TileKind {
     }
 }
 
+#[derive(Clone)]
 pub struct Tile {
     kind: TileKind,
     pub symbol: &'static str,

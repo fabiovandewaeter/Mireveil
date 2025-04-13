@@ -1,10 +1,11 @@
 use color_eyre::Result;
-use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind};
+use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind, MouseEvent, MouseEventKind};
 use ratatui::{
     Terminal,
     backend::CrosstermBackend,
     prelude::*,
-    widgets::{Block, Borders, Clear},
+    text::Text,
+    widgets::{Block, Borders, Clear, Paragraph, Wrap},
 };
 
 use crate::{
@@ -29,12 +30,36 @@ impl Default for Config {
     }
 }
 
+struct Menu {
+    visible: bool,
+    selected_tile_info: Option<String>,
+    selected_entity_info: Option<String>,
+}
+
+impl Menu {
+    fn area(&self, area: Rect) -> Rect {
+        let width = (area.width * 3) / 10;
+        Rect::new(area.right() - width, area.y, width, area.height)
+    }
+}
+
+impl Default for Menu {
+    // zone where the widget will be drawn
+    fn default() -> Self {
+        Self {
+            visible: false,
+            selected_tile_info: None,
+            selected_entity_info: None,
+        }
+    }
+}
+
 pub struct App {
     map: Map,
     entity_manager: EntityManager,
     config: Config,
     exit: bool,
-    inventory_visible: bool,
+    menu: Menu,
 }
 
 impl App {
@@ -55,23 +80,29 @@ impl App {
             entity_manager: entity_manager,
             config,
             exit: false,
-            inventory_visible: false,
+            menu: Menu::default(),
         }
     }
 
     pub fn run(mut self, mut terminal: Terminal<CrosstermBackend<std::io::Stdout>>) -> Result<()> {
         while !self.exit {
-            terminal.draw(|f| self.draw(f))?;
             self.handle_events()?;
+            terminal.draw(|f| self.draw(f))?;
         }
         Ok(())
     }
 
     fn handle_events(&mut self) -> Result<()> {
-        if let Event::Key(key) = event::read()? {
-            if key.kind == KeyEventKind::Press {
-                self.process_key(key);
+        match event::read()? {
+            Event::Key(key) => {
+                if key.kind == KeyEventKind::Press {
+                    self.process_key(key);
+                }
             }
+            Event::Mouse(mouse_event) => {
+                self.process_mouse(mouse_event);
+            }
+            _ => {}
         }
         Ok(())
     }
@@ -80,9 +111,54 @@ impl App {
         if key.kind == KeyEventKind::Press {
             match key.code {
                 KeyCode::Char('q') => self.exit = true,
-                KeyCode::Char('e') => self.inventory_visible = !self.inventory_visible, // Toggle inventaire
+                KeyCode::Char('e') => self.menu.visible = !self.menu.visible, // Toggle inventaire
                 _ => self.entity_manager.update(key.code, &mut self.map),
             }
+        }
+    }
+
+    fn process_mouse(&mut self, mouse_event: MouseEvent) {
+        match mouse_event.kind {
+            MouseEventKind::Down(_) => {
+                let click_x = mouse_event.column;
+                let click_y = mouse_event.row;
+
+                if let Ok((cols, rows)) = crossterm::terminal::size() {
+                    let screen_area = Rect::new(0, 0, cols, rows);
+                    let menu_area = self.menu.area(screen_area);
+
+                    // returns if the clic in on the menu pop-up
+                    if click_x >= menu_area.x
+                        && click_x < menu_area.x + menu_area.width
+                        && click_y >= menu_area.y
+                        && click_y < menu_area.y + menu_area.height
+                    {
+                        return;
+                    }
+
+                    let (camera_x, camera_y) =
+                        self.calculate_camera_position(&self.entity_manager.player, screen_area);
+
+                    // convert to map coordinates
+                    let world_x = camera_x + click_x as i32;
+                    let world_y = camera_y + click_y as i32;
+
+                    // try to find the entity at the coordiantes
+                    if let Some(entity) = self.entity_manager.find_entity_at(world_x, world_y) {
+                        self.menu.selected_entity_info = Some(String::from(entity.symbol));
+                        self.menu.selected_tile_info = None;
+                    }
+                    // otherwise gets the tile
+                    else if let Some(tile) = self.map.get_tile(world_x, world_y) {
+                        self.menu.selected_tile_info = Some(String::from(tile.symbol));
+                        self.menu.selected_entity_info = None;
+                    } else {
+                        self.menu.selected_tile_info = None;
+                        self.menu.selected_entity_info = None;
+                    }
+                }
+            }
+            _ => {}
         }
     }
 
@@ -93,25 +169,55 @@ impl App {
         )
     }
 
-    fn draw_inventory(&self, frame: &mut Frame, area: Rect) {
-        // zone where the widget will be drawn
-        let width = (area.width * 3) / 10;
-        let inventory_area = Rect::new(area.right() - width, area.y, width, area.height);
+    fn draw_menu(&self, frame: &mut Frame, area: Rect) {
+        // Récupère la zone du menu en fonction de l'aire globale
+        let menu_area = self.menu.area(area);
+        // Efface la zone pour éviter de laisser des résidus d'un rendu précédent
+        frame.render_widget(Clear, menu_area);
 
-        // clear the zone on the screen
-        frame.render_widget(Clear, inventory_area);
-
-        // Inventory widget
+        // Crée le block qui sert de cadre au menu
         let block = Block::default()
-            .title(" Inventory ")
+            .title(" Menu ")
             .borders(Borders::ALL)
             .border_style(Style::new().light_red())
             .title_style(Style::new().white().bold())
             .style(Style::new().bg(Color::Rgb(30, 30, 40)));
+        frame.render_widget(block, menu_area);
 
-        frame.render_widget(block, inventory_area);
+        // Définir une zone intérieure pour le texte à l'intérieur du block
+        let inner_area = Rect::new(
+            menu_area.x + 1,
+            menu_area.y + 1,
+            menu_area.width - 2,
+            menu_area.height - 2,
+        );
 
-        // TODO: add inventory content
+        // Construire un vecteur de Line pour le texte à afficher
+        let mut lines: Vec<Line> = Vec::new();
+
+        if let Some(ref entity_info) = self.menu.selected_entity_info {
+            lines.push(Line::from(Span::styled(
+                format!("Entity: {}", entity_info),
+                Style::default().fg(Color::Yellow),
+            )));
+        } else if let Some(ref tile_info) = self.menu.selected_tile_info {
+            lines.push(Line::from(Span::styled(
+                format!("Tile: {}", tile_info),
+                Style::default().fg(Color::Green),
+            )));
+        } else {
+            lines.push(Line::from(Span::styled(
+                "No selection",
+                Style::default().fg(Color::Gray),
+            )));
+        }
+
+        // Convertir le vecteur de Line en Text
+        let text = Text::from(lines);
+
+        // Créer et afficher un Paragraph avec le texte
+        let paragraph = Paragraph::new(text).wrap(Wrap { trim: true });
+        frame.render_widget(paragraph, inner_area);
     }
 
     fn draw(&self, frame: &mut Frame) {
@@ -134,9 +240,9 @@ impl App {
         // draw entities
         self.entity_manager.draw(buffer, area, (camera_x, camera_y));
 
-        // draw inventory
-        if self.inventory_visible {
-            self.draw_inventory(frame, area);
+        // draw menu
+        if self.menu.visible {
+            self.draw_menu(frame, area);
         }
     }
 }

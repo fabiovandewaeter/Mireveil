@@ -39,4 +39,18 @@ impl EntityManager {
         }
         self.player.draw(buffer, area, camera_position);
     }
+
+    pub fn find_entity_at(&self, world_x: i32, world_y: i32) -> Option<&Entity> {
+        // checks if it's the player first
+        if self.player.position == (world_x, world_y) {
+            return Some(&self.player);
+        }
+        // else checks if it's another entity
+        for entity in self.entities.iter() {
+            if entity.position == (world_x, world_y) {
+                return Some(entity.as_ref());
+            }
+        }
+        None
+    }
 }
