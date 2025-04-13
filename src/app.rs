@@ -21,14 +21,8 @@ pub struct Config {
 impl Default for Config {
     fn default() -> Self {
         Self {
-            //light brown
-            //background_style: Style::default().bg(Color::Rgb(131, 105, 83)),
-            //brown
-            //background_style: Style::default().bg(Color::Rgb(83, 69, 60)),
-            //dark brown
-            //background_style: Style::default().bg(Color::Rgb(44, 38, 32)),
-            //even darker brown
-            background_style: Style::default().bg(Color::Rgb(30, 26, 21)),
+            //background_style: Style::default().bg(Color::Rgb(30, 26, 21)),
+            background_style: Style::default().bg(Color::Rgb(26, 13, 0)),
         }
     }
 }

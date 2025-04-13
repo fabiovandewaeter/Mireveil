@@ -26,8 +26,10 @@ impl Chunk {
             .map(|x| {
                 (0..CHUNK_SIZE)
                     .map(|y| {
-                        if x % 10 == 1 && y % 5 == 1 {
+                        if x % 32 == 0 && y % 32 == 0 {
                             Tile::new(TileKind::Wall)
+                        } else if x % 32 == 1 && y % 32 == 1 {
+                            Tile::new(TileKind::Water)
                         } else {
                             Tile::new(TileKind::Grass)
                         }

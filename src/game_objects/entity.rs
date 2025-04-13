@@ -55,13 +55,20 @@ impl Controller {
     }
 
     fn handle_player_input(&self, entity: &mut Entity, key_code: KeyCode, map: &mut Map) {
-        let (dx, dy) = match key_code {
-            KeyCode::Up => (0, -1),
-            KeyCode::Down => (0, 1),
-            KeyCode::Left => (-1, 0),
-            KeyCode::Right => (1, 0),
-            _ => (0, 0),
-        };
+        let mut dx = 0;
+        let mut dy = 0;
+        if (key_code == KeyCode::Up) {
+            dy -= 1;
+        }
+        if (key_code == KeyCode::Down) {
+            dy += 1;
+        }
+        if (key_code == KeyCode::Left) {
+            dx -= 1;
+        }
+        if (key_code == KeyCode::Right) {
+            dx += 1;
+        }
 
         let new_x = entity.position.0 + dx;
         let new_y = entity.position.1 + dy;
