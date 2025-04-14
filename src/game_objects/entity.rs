@@ -1,3 +1,5 @@
+use std::f32::consts::E;
+
 use crossterm::event::KeyCode;
 use ratatui::{
     buffer::Buffer,
@@ -5,7 +7,10 @@ use ratatui::{
     style::{Color, Style},
 };
 
-use crate::map::map::{CHUNK_SIZE, Map};
+use crate::{
+    map::map::{CHUNK_SIZE, Map},
+    systems::entity_manager::{self, EntityManager},
+};
 
 pub trait Drawable {
     fn draw(&self, buffer: &mut Buffer, area: Rect, camera_position: (i32, i32));
@@ -76,18 +81,30 @@ pub enum Controller {
 }
 
 impl Controller {
-    pub fn update_entity(&self, entity: &mut Entity, input: Option<KeyCode>, map: &mut Map) {
+    pub fn update_entity(
+        &self,
+        entity: &mut Entity,
+        input: Option<KeyCode>,
+        map: &mut Map,
+        entities: &Vec<Box<Entity>>,
+    ) {
         match self {
             Controller::Player => {
                 if let Some(key_code) = input {
-                    self.handle_player_input(entity, key_code, map);
+                    self.handle_player_input(entity, key_code, map, entities);
                 }
             }
             Controller::AI => {}
         }
     }
 
-    fn handle_player_input(&self, entity: &mut Entity, key_code: KeyCode, map: &mut Map) {
+    fn handle_player_input(
+        &self,
+        entity: &mut Entity,
+        key_code: KeyCode,
+        map: &mut Map,
+        entities: &Vec<Box<Entity>>,
+    ) {
         let (dx, dy) = match key_code {
             KeyCode::Up => (0, -1),
             KeyCode::Down => (0, 1),
@@ -99,6 +116,20 @@ impl Controller {
         let new_x = entity.position.0 + dx;
         let new_y = entity.position.1 + dy;
 
+        self.handle_entity_movement(entity, new_x, new_y, map, entities);
+    }
+
+    fn handle_entity_movement(
+        &self,
+        entity: &mut Entity,
+        new_x: i32,
+        new_y: i32,
+        map: &mut Map,
+        entities: &Vec<Box<Entity>>,
+    ) {
+        /*if let Some(entity) = entities.find_entity_at(new_x, new_y) {
+            // attack the entity
+        }*/
         if let Some(tile) = map.get_tile(new_x, new_y) {
             if !tile.solid {
                 entity.position = (new_x, new_y);
@@ -111,6 +142,7 @@ impl Controller {
     }
 }
 
+#[derive(Default)]
 pub struct EntityStats {
     pub max_hp: u32,
     pub hp: u32,
@@ -119,20 +151,6 @@ pub struct EntityStats {
     pub defense: u32,
     pub strength: u32,
     pub magic: u32,
-}
-
-impl Default for EntityStats {
-    fn default() -> Self {
-        Self {
-            max_hp: 10,
-            hp: 10,
-            max_mana: 10,
-            mana: 10,
-            defense: 0,
-            strength: 1,
-            magic: 1,
-        }
-    }
 }
 
 pub struct Entity {
@@ -160,9 +178,9 @@ impl Entity {
         Self::new(EntityKind::Human, position, Controller::Player)
     }
 
-    pub fn update(&mut self, input: Option<KeyCode>, map: &mut Map) {
+    pub fn update(&mut self, input: Option<KeyCode>, map: &mut Map, entities: &Vec<Box<Entity>>) {
         let controller = self.controller;
-        controller.update_entity(self, input, map);
+        controller.update_entity(self, input, map, entities);
     }
 }
 
