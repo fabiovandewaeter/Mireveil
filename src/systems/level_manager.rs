@@ -1,5 +1,7 @@
+use crate::entities::entity::{Entity, EntityStats};
+
 trait XPCurve {
-    // returns the a
+    // returns the xp needed to reach that level
     fn xp_required(&self, level: u32) -> u32;
 }
 
@@ -33,8 +35,8 @@ impl XPCurve for ExponentialCurve {
 
 pub struct LevelManager {
     pub level: u32,
-    pub current_xp: u32,
-    pub xp_curve: Box<dyn XPCurve>,
+    current_xp: u32,
+    xp_curve: Box<dyn XPCurve>,
 }
 
 impl LevelManager {
@@ -46,21 +48,40 @@ impl LevelManager {
         }
     }
 
-    pub fn add_xp(&mut self, xp: u32) -> u32 {
+    pub fn add_xp(&mut self, xp: u32, entity_stats: &mut EntityStats) -> u32 {
         let initial_level = self.level;
 
         self.current_xp += xp;
         // checks if there are any level ups
         while (self.current_xp >= self.xp_curve.xp_required(self.level + 1)) {
-            self.current_xp -= self.xp_curve.xp_required(self.level + 1);
-            self.level += 1;
+            self.handle_level_up(entity_stats);
         }
-
         self.level - initial_level
     }
 
+    // returns the required xp for next lvl
     pub fn xp_to_next_level(&self) -> u32 {
         self.xp_curve.xp_required(self.level + 1)
+    }
+
+    // add stats and increase level of the entity
+    fn handle_level_up(&mut self, entity_stats: &mut EntityStats) {
+        self.current_xp -= self.xp_curve.xp_required(self.level + 1);
+        self.level += 1;
+
+        // increase max_hp and reset current hp
+        let bonus_hp = (entity_stats.max_hp as f32 * 0.1).ceil() as u32;
+        entity_stats.max_hp += bonus_hp;
+        entity_stats.hp = entity_stats.max_hp;
+
+        // increase max_mana and reset current mana
+        let bonus_mana = (entity_stats.max_mana as f32 * 0.1).ceil() as u32;
+        entity_stats.max_mana += bonus_mana;
+        entity_stats.mana = entity_stats.max_mana;
+
+        entity_stats.defense += 1;
+        entity_stats.strength += 1;
+        entity_stats.magic += 1;
     }
 }
 
