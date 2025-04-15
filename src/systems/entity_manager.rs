@@ -9,7 +9,7 @@ use crate::{
 
 pub struct EntityManager {
     pub player: Entity,
-    entities: Vec<Box<Entity>>,
+    entities: Vec<Entity>,
 }
 
 impl EntityManager {
@@ -21,19 +21,20 @@ impl EntityManager {
         }
     }
 
-    pub fn add_entity(&mut self, entity: Box<Entity>) {
+    pub fn add_entity(&mut self, entity: Entity) {
         self.entities.push(entity);
     }
 
     pub fn update(&mut self, key_code: KeyCode, map: &mut Map) {
         self.player
-            .update(Some(key_code), map, &mut [], &mut self.entities);
+            .update(Some(key_code), map, self.entities.iter_mut());
         update_visibility(self.player.position, 50, map);
         let size = self.entities.len();
         for i in 0..size {
             let (left, right) = self.entities.split_at_mut(i);
             let (current, right) = right.split_first_mut().unwrap();
-            current.update(None, map, left, right);
+            let other_entities = left.iter_mut().chain(right.iter_mut());
+            current.update(None, map, other_entities);
         }
     }
 
@@ -52,7 +53,7 @@ impl EntityManager {
         // else checks if it's another entity
         for entity in self.entities.iter() {
             if entity.position == (world_x, world_y) {
-                return Some(entity.as_ref());
+                return Some(entity);
             }
         }
         None

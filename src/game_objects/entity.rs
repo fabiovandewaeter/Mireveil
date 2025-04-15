@@ -1,5 +1,3 @@
-use std::f32::consts::E;
-
 use crossterm::event::KeyCode;
 use ratatui::{
     buffer::Buffer,
@@ -7,10 +5,7 @@ use ratatui::{
     style::{Color, Style},
 };
 
-use crate::{
-    map::map::{CHUNK_SIZE, Map},
-    systems::entity_manager::{self, EntityManager},
-};
+use crate::map::map::{CHUNK_SIZE, Map};
 
 pub trait Drawable {
     fn draw(&self, buffer: &mut Buffer, area: Rect, camera_position: (i32, i32));
@@ -81,30 +76,34 @@ pub enum Controller {
 }
 
 impl Controller {
-    pub fn update_entity(
+    pub fn update_entity<'a, I>(
         &self,
         entity: &mut Entity,
         input: Option<KeyCode>,
         map: &mut Map,
-        entities: &Vec<Box<Entity>>,
-    ) {
+        other_entities: I,
+    ) where
+        I: Iterator<Item = &'a mut Entity>,
+    {
         match self {
             Controller::Player => {
                 if let Some(key_code) = input {
-                    self.handle_player_input(entity, key_code, map, entities);
+                    self.handle_player_input(entity, key_code, map, other_entities);
                 }
             }
             Controller::AI => {}
         }
     }
 
-    fn handle_player_input(
+    fn handle_player_input<'a, I>(
         &self,
         entity: &mut Entity,
         key_code: KeyCode,
         map: &mut Map,
-        entities: &Vec<Box<Entity>>,
-    ) {
+        other_entities: I,
+    ) where
+        I: Iterator<Item = &'a mut Entity>,
+    {
         let (dx, dy) = match key_code {
             KeyCode::Up => (0, -1),
             KeyCode::Down => (0, 1),
@@ -116,17 +115,19 @@ impl Controller {
         let new_x = entity.position.0 + dx;
         let new_y = entity.position.1 + dy;
 
-        self.handle_entity_movement(entity, new_x, new_y, map, entities);
+        self.handle_entity_movement(entity, new_x, new_y, map, other_entities);
     }
 
-    fn handle_entity_movement(
+    fn handle_entity_movement<'a, I>(
         &self,
         entity: &mut Entity,
         new_x: i32,
         new_y: i32,
         map: &mut Map,
-        entities: &Vec<Box<Entity>>,
-    ) {
+        other_entities: I,
+    ) where
+        I: Iterator<Item = &'a mut Entity>,
+    {
         /*if let Some(entity) = entities.find_entity_at(new_x, new_y) {
             // attack the entity
         }*/
@@ -178,9 +179,12 @@ impl Entity {
         Self::new(EntityKind::Human, position, Controller::Player)
     }
 
-    pub fn update(&mut self, input: Option<KeyCode>, map: &mut Map, entities: &Vec<Box<Entity>>) {
+    pub fn update<'a, I>(&mut self, input: Option<KeyCode>, map: &mut Map, other_entities: I)
+    where
+        I: Iterator<Item = &'a mut Entity>,
+    {
         let controller = self.controller;
-        controller.update_entity(self, input, map, entities);
+        controller.update_entity(self, input, map, other_entities);
     }
 }
 

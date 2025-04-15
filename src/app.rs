@@ -65,16 +65,8 @@ pub struct App {
 impl App {
     pub fn new(config: Config) -> Self {
         let mut entity_manager = EntityManager::new();
-        entity_manager.add_entity(Box::new(Entity::new(
-            EntityKind::Dragon,
-            (0, 1),
-            Controller::AI,
-        )));
-        entity_manager.add_entity(Box::new(Entity::new(
-            EntityKind::Sheep,
-            (1, 0),
-            Controller::AI,
-        )));
+        entity_manager.add_entity(Entity::new(EntityKind::Dragon, (0, 1), Controller::AI));
+        entity_manager.add_entity(Entity::new(EntityKind::Sheep, (1, 0), Controller::AI));
         Self {
             map: Map::default(),
             entity_manager: entity_manager,
