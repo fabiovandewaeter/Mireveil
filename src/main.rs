@@ -2,7 +2,10 @@ use std::io::stdout;
 
 use app::{App, Config};
 use color_eyre::Result;
-use crossterm::{event::EnableMouseCapture, execute};
+use crossterm::{
+    event::{DisableMouseCapture, EnableMouseCapture},
+    execute,
+};
 
 mod app;
 mod entities;
@@ -18,5 +21,8 @@ fn main() -> Result<()> {
     let app = App::new(config);
     let app_result = app.run(terminal);
     ratatui::restore();
+    if let Err(err) = execute!(stdout(), DisableMouseCapture) {
+        eprintln!("Error disabling mouse capture: {err}");
+    }
     app_result
 }
