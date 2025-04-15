@@ -61,6 +61,9 @@ impl EntityManager {
         for entity in self.entities.iter() {
             entity.draw(buffer, area, camera_position);
         }
+        for dead_entity in self.dead_entities.iter() {
+            dead_entity.draw(buffer, area, camera_position);
+        }
         self.player.draw(buffer, area, camera_position);
     }
 
@@ -73,6 +76,12 @@ impl EntityManager {
         for entity in self.entities.iter() {
             if entity.position == (world_x, world_y) {
                 return Some(entity);
+            }
+        }
+        // else checks if it's a dead entity
+        for dead_entity in self.dead_entities.iter() {
+            if dead_entity.position == (world_x, world_y) {
+                return Some(dead_entity);
             }
         }
         None

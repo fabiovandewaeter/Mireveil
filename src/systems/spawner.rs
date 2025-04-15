@@ -6,7 +6,10 @@ use rand::{
     rng,
 };
 
-use crate::entities::entity::{Controller, Entity, EntityKind};
+use crate::{
+    entities::entity::{Controller, Entity, EntityKind},
+    map::map::Map,
+};
 
 use super::entity_manager::EntityManager;
 
@@ -49,7 +52,7 @@ impl Spawner {
     }
 
     // spawns an entity if cooldown has passed and if there is an empty tile
-    pub fn try_spawn(&mut self, entity_manager: &mut EntityManager) {
+    pub fn try_spawn(&mut self, entity_manager: &mut EntityManager, map: &Map) {
         let now = Instant::now();
         if now.duration_since(self.last_spawn) < self.config.interval {
             return;
@@ -84,7 +87,9 @@ impl Spawner {
         let spawn_x = base_x + offset_x;
         let spawn_y = base_y + offset_y;
 
-        if entity_manager.find_entity_at(spawn_x, spawn_y).is_none() {
+        if entity_manager.find_entity_at(spawn_x, spawn_y).is_none()
+            && !map.get_tile(spawn_x, spawn_y).unwrap().solid
+        {
             self.last_spawn = now;
             let new_entity = Entity::new(chosen_kind, (spawn_x, spawn_y), Controller::AI);
             // only spawns the entity if there is not too many entities on the map

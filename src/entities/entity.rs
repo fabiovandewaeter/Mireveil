@@ -9,7 +9,7 @@ use crate::{
     entities::action::Attack,
     map::map::{CHUNK_SIZE, Map},
     menu::Logger,
-    systems::level_manager::LevelManager,
+    systems::{camera::style_to_greyscale, level_manager::LevelManager},
 };
 
 use super::action::Action;
@@ -284,9 +284,20 @@ impl Drawable for Entity {
                 x: screen_x as u16,
                 y: screen_y as u16,
             };
-            let cell = buffer.cell_mut(position).unwrap();
-            cell.set_symbol(self.symbol());
-            cell.set_style(self.style());
+
+            let mut style = self.style();
+            let mut symbol = self.symbol();
+
+            // change the style and symbol if the entity is dead
+            if self.is_dead() {
+                style = style.fg(style_to_greyscale(style.fg.unwrap_or(Color::Gray)));
+                symbol = "†";
+            }
+
+            if let Some(cell) = buffer.cell_mut(position) {
+                cell.set_symbol(symbol);
+                cell.set_style(style);
+            }
         }
     }
 }

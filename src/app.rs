@@ -62,7 +62,7 @@ impl App {
         while !self.exit {
             self.handle_events()?;
             //self.update();
-            spawner.try_spawn(&mut self.entity_manager);
+            spawner.try_spawn(&mut self.entity_manager, &self.map);
             terminal.draw(|f| self.draw(f))?;
         }
         Ok(())
