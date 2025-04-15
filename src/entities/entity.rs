@@ -18,6 +18,7 @@ pub trait Drawable {
     fn draw(&self, buffer: &mut Buffer, area: Rect, camera_position: (i32, i32));
 }
 
+#[derive(Clone, Copy)]
 pub enum EntityKind {
     Human,
     Dragon,
@@ -182,16 +183,12 @@ impl Controller {
 
     fn handle_xp_gain(attacker: &mut Entity, target: &mut Entity, logger: &mut Logger) {
         let xp_gained = target.xp_drop;
-        print!("{}", attacker.level_manager.level);
 
         let levels_gained = attacker
             .level_manager
             .add_xp(xp_gained, &mut attacker.stats);
         logger.push_message(format!("{} gained {} XP", attacker.symbol(), xp_gained));
 
-        print!("{} {}", attacker.level_manager.level, levels_gained);
-
-        //todo!("why print rechead lvl 1 ?");
         if levels_gained > 0 {
             logger.push_message(format!(
                 "{} reached level {}",

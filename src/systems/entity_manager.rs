@@ -1,16 +1,26 @@
+use std::time::Instant;
+
 use crossterm::event::KeyCode;
+use rand::{
+    Rng,
+    distr::{Distribution, weighted::WeightedIndex},
+    thread_rng,
+};
 use ratatui::{buffer::Buffer, layout::Rect};
 
 use crate::{
-    entities::entity::{Drawable, Entity},
+    entities::entity::{Controller, Drawable, Entity, EntityKind},
     map::map::Map,
     menu::Logger,
     systems::camera::update_visibility,
 };
 
+use super::spawner::SpawnerConfiguration;
+
 pub struct EntityManager {
     pub player: Entity,
     entities: Vec<Entity>,
+    spawner_config: Option<SpawnerConfiguration>,
 }
 
 impl EntityManager {
@@ -19,6 +29,7 @@ impl EntityManager {
         Self {
             player,
             entities: Vec::new(),
+            spawner_config: None,
         }
     }
 
@@ -58,5 +69,15 @@ impl EntityManager {
             }
         }
         None
+    }
+
+    pub fn count_living_entities(&self) -> u32 {
+        let mut counter = 0;
+        for entity in &self.entities {
+            if !entity.is_dead() {
+                counter += 1;
+            }
+        }
+        counter
     }
 }

@@ -11,7 +11,11 @@ use crate::{
     entities::entity::{Controller, Entity, EntityKind},
     map::map::*,
     menu::Menu,
-    systems::{camera, entity_manager::EntityManager},
+    systems::{
+        camera,
+        entity_manager::EntityManager,
+        spawner::{Spawner, SpawnerConfiguration},
+    },
 };
 
 #[derive(Clone)]
@@ -53,8 +57,19 @@ impl App {
     }
 
     pub fn run(mut self, mut terminal: Terminal<CrosstermBackend<std::io::Stdout>>) -> Result<()> {
+        let spawner_config = SpawnerConfiguration::default();
+        let mut spawner = Spawner::new(spawner_config);
         while !self.exit {
             self.handle_events()?;
+            //self.update();
+            // TODO: move spawn logic in Spawner
+            /*if let Some(new_entity) = spawner.try_spawn(&mut self.entity_manager) {
+                if self.entity_manager.count_living_entities() < spawner.config.max_entities as u32
+                {
+                    self.entity_manager.add_entity(new_entity);
+                }
+            }*/
+            spawner.try_spawn(&mut self.entity_manager);
             terminal.draw(|f| self.draw(f))?;
         }
         Ok(())
@@ -131,6 +146,8 @@ impl App {
             _ => {}
         }
     }
+
+    fn update(&self) {}
 
     fn draw(&self, frame: &mut Frame) {
         let area = frame.area();
