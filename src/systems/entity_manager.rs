@@ -1,26 +1,17 @@
-use std::time::Instant;
-
 use crossterm::event::KeyCode;
-use rand::{
-    Rng,
-    distr::{Distribution, weighted::WeightedIndex},
-    thread_rng,
-};
 use ratatui::{buffer::Buffer, layout::Rect};
 
 use crate::{
-    entities::entity::{Controller, Drawable, Entity, EntityKind},
+    entities::entity::{Drawable, Entity},
     map::map::Map,
     menu::Logger,
-    systems::camera::update_visibility,
+    systems::camera,
 };
-
-use super::spawner::SpawnerConfiguration;
 
 pub struct EntityManager {
     pub player: Entity,
     entities: Vec<Entity>,
-    spawner_config: Option<SpawnerConfiguration>,
+    dead_entities: Vec<Entity>,
 }
 
 impl EntityManager {
@@ -29,7 +20,7 @@ impl EntityManager {
         Self {
             player,
             entities: Vec::new(),
-            spawner_config: None,
+            dead_entities: Vec::new(),
         }
     }
 
@@ -40,13 +31,29 @@ impl EntityManager {
     pub fn update(&mut self, key_code: KeyCode, map: &mut Map, logger: &mut Logger) {
         self.player
             .update(Some(key_code), map, self.entities.iter_mut(), logger);
-        update_visibility(self.player.position, 50, map);
+        camera::update_visibility(self.player.position, 50, map);
         let size = self.entities.len();
         for i in 0..size {
             let (left, right) = self.entities.split_at_mut(i);
             let (current, right) = right.split_first_mut().unwrap();
             let other_entities = left.iter_mut().chain(right.iter_mut());
             current.update(None, map, other_entities, logger);
+        }
+
+        self.handle_dead_entities();
+    }
+
+    fn handle_dead_entities(&mut self) {
+        let size = self.entities.len();
+        let mut dead_entity_indices = Vec::new();
+        for i in 0..size {
+            if self.entities[i].is_dead() {
+                dead_entity_indices.push(i);
+            }
+        }
+        for i in dead_entity_indices {
+            let dead_entity = self.entities.remove(i);
+            self.dead_entities.push(dead_entity);
         }
     }
 

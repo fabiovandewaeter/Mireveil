@@ -62,13 +62,6 @@ impl App {
         while !self.exit {
             self.handle_events()?;
             //self.update();
-            // TODO: move spawn logic in Spawner
-            /*if let Some(new_entity) = spawner.try_spawn(&mut self.entity_manager) {
-                if self.entity_manager.count_living_entities() < spawner.config.max_entities as u32
-                {
-                    self.entity_manager.add_entity(new_entity);
-                }
-            }*/
             spawner.try_spawn(&mut self.entity_manager);
             terminal.draw(|f| self.draw(f))?;
         }
