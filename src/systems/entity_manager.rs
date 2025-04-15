@@ -25,15 +25,17 @@ impl EntityManager {
         self.entities.push(entity);
     }
 
-    /*pub fn update(&mut self, key_code: KeyCode, map: &mut Map) {
-        self.player.update(Some(key_code), map, &self.entities);
+    pub fn update(&mut self, key_code: KeyCode, map: &mut Map) {
+        self.player
+            .update(Some(key_code), map, &mut [], &mut self.entities);
         update_visibility(self.player.position, 50, map);
-        let entities = &self.entities;
-        for entity in &mut self.entities {
-            //entity.update(None, map, &self.entities);
-            entity.update(None, map, &entities);
+        let size = self.entities.len();
+        for i in 0..size {
+            let (left, right) = self.entities.split_at_mut(i);
+            let (current, right) = right.split_first_mut().unwrap();
+            current.update(None, map, left, right);
         }
-    }*/
+    }
 
     pub fn draw(&self, buffer: &mut Buffer, area: Rect, camera_position: (i32, i32)) {
         for entity in self.entities.iter() {
