@@ -4,8 +4,7 @@ use ratatui::{
     Terminal,
     backend::CrosstermBackend,
     prelude::*,
-    text::Text,
-    widgets::{Block, Borders, Clear, Paragraph, Wrap},
+    widgets::{Block, Borders},
 };
 
 use crate::{

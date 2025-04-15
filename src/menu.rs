@@ -1,6 +1,5 @@
 use ratatui::{
     prelude::*,
-    text::Text,
     widgets::{Block, Borders, Clear, Paragraph, Wrap},
 };
 
@@ -32,12 +31,10 @@ impl Menu {
     }
 
     pub fn draw(&self, frame: &mut Frame, area: Rect) {
-        // Récupère la zone du menu en fonction de l'aire globale
         let menu_area = self.area(area);
-        // Efface la zone pour éviter de laisser des résidus d'un rendu précédent
+        // clear the menu_area
         frame.render_widget(Clear, menu_area);
 
-        // Crée le block qui sert de cadre au menu
         let block = Block::default()
             .title(" Menu ")
             .borders(Borders::ALL)
@@ -46,7 +43,7 @@ impl Menu {
             .style(Style::new().bg(Color::Rgb(30, 30, 40)));
         frame.render_widget(block, menu_area);
 
-        // Définir une zone intérieure pour le texte à l'intérieur du block
+        // inner area for the texte inside the block
         let inner_area = Rect::new(
             menu_area.x + 1,
             menu_area.y + 1,
@@ -54,9 +51,10 @@ impl Menu {
             menu_area.height - 2,
         );
 
-        // Construire un vecteur de Line pour le texte à afficher
-        let mut lines: Vec<Line> = Vec::new();
+        // vector of Line that will be drawn
+        let mut lines = Vec::new();
 
+        // draws the informations
         if let Some(ref entity_info) = self.selected_entity_info {
             lines.push(Line::from(Span::styled(
                 format!("Entity: {}", entity_info),
@@ -74,11 +72,20 @@ impl Menu {
             )));
         }
 
-        // Convertir le vecteur de Line en Text
-        let text = Text::from(lines);
+        // separator
+        lines.push(Line::from("────────────".dim()));
 
-        // Créer et afficher un Paragraph avec le texte
-        let paragraph = Paragraph::new(text).wrap(Wrap { trim: true });
+        // draw the logs
+        lines.push(Line::from(Span::styled(
+            "Dernières actions:",
+            Style::default().fg(Color::White).bold(),
+        )));
+        for log in self.logger.logs.iter().rev().take(5) {
+            lines.push(Line::from(Span::raw(log)));
+        }
+
+        // creates and draw the Paragraph of Text
+        let paragraph = Paragraph::new(lines).wrap(Wrap { trim: true });
         frame.render_widget(paragraph, inner_area);
     }
 }
