@@ -6,9 +6,13 @@ use ratatui::{
 };
 
 use crate::{
+    entities::action::Attack,
     map::map::{CHUNK_SIZE, Map},
     menu::Logger,
+    systems::level_manager::LevelManager,
 };
+
+use super::action::Action;
 
 pub trait Drawable {
     fn draw(&self, buffer: &mut Buffer, area: Rect, camera_position: (i32, i32));
@@ -70,7 +74,7 @@ impl EntityKind {
         }
     }
 
-    fn actions(&self) -> Vec<Box<dyn EntityAction>> {
+    fn actions(&self) -> Vec<Box<dyn Action>> {
         match self {
             EntityKind::Human => {
                 vec![Box::new(Attack::new(10))]
@@ -149,11 +153,20 @@ impl Controller {
         I: Iterator<Item = &'a mut Entity>,
     {
         if let Some(target) = other_entities.find(|e| e.position == (new_x, new_y)) {
+            let target_was_alive = !target.is_dead();
             // attack the entity
             for action in &entity.actions {
                 if let Some(msg) = action.affect(entity, target) {
                     logger.push_message(msg);
                 }
+            }
+            // if the target is now dead
+            if target_was_alive && target.is_dead() {
+                logger.push_message(format!(
+                    "{} xp needed for next level",
+                    entity.level_manager.xp_to_next_level()
+                ));
+                Self::handle_xp_gain(entity, target, logger);
             }
         }
         if let Some(tile) = map.get_tile(new_x, new_y) {
@@ -164,6 +177,21 @@ impl Controller {
                     new_y.div_euclid(CHUNK_SIZE as i32),
                 ));
             }
+        }
+    }
+
+    fn handle_xp_gain(attacker: &mut Entity, target: &mut Entity, logger: &mut Logger) {
+        let xp_gained = target.xp_drop;
+
+        let levels_gained = target.level_manager.add_xp(xp_gained);
+        logger.push_message(format!("{} gained {} XP", attacker.symbol(), xp_gained));
+
+        if levels_gained > 0 {
+            logger.push_message(format!(
+                "{} reached level {}",
+                attacker.symbol(),
+                attacker.level_manager.level
+            ));
         }
     }
 }
@@ -182,24 +210,32 @@ pub struct EntityStats {
 pub struct Entity {
     kind: EntityKind,
     pub position: (i32, i32),
-    pub symbol: &'static str,
-    pub style: Style,
-    pub controller: Controller,
+    controller: Controller,
     pub stats: EntityStats,
-    actions: Vec<Box<dyn EntityAction>>,
+    xp_drop: u32,
+    level_manager: LevelManager,
+    actions: Vec<Box<dyn Action>>,
 }
 
 impl Entity {
     pub fn new(kind: EntityKind, position: (i32, i32), controller: Controller) -> Self {
         Self {
             position,
-            symbol: kind.symbol(),
-            style: kind.style(),
             controller,
             stats: kind.stats(),
+            xp_drop: 10,
+            level_manager: LevelManager::default(),
             actions: kind.actions(),
             kind,
         }
+    }
+
+    pub fn symbol(&self) -> &'static str {
+        self.kind.symbol()
+    }
+
+    pub fn style(&self) -> Style {
+        self.kind.style()
     }
 
     pub fn player(position: (i32, i32)) -> Self {
@@ -217,6 +253,16 @@ impl Entity {
     {
         let controller = self.controller;
         controller.update_entity(self, input, map, other_entities, logger);
+    }
+
+    pub fn take_damage(&mut self, amount: u32) -> u32 {
+        let damage = std::cmp::min(amount, self.stats.hp);
+        self.stats.hp -= damage;
+        damage
+    }
+
+    pub fn is_dead(&self) -> bool {
+        self.stats.hp == 0
     }
 }
 
@@ -236,36 +282,8 @@ impl Drawable for Entity {
                 y: screen_y as u16,
             };
             let cell = buffer.cell_mut(position).unwrap();
-            cell.set_symbol(self.symbol);
-            cell.set_style(self.style);
+            cell.set_symbol(self.symbol());
+            cell.set_style(self.style());
         }
-    }
-}
-
-trait EntityAction {
-    fn affect(&self, source: &Entity, target: &mut Entity) -> Option<String>;
-}
-
-struct Attack {
-    damage: u32,
-    // TODO: type, range etc.
-}
-
-impl Attack {
-    fn new(damage: u32) -> Self {
-        Self { damage }
-    }
-}
-
-impl EntityAction for Attack {
-    fn affect(&self, source: &Entity, target: &mut Entity) -> Option<String> {
-        // makes sure the target dont get negative hp
-        let damage = std::cmp::min(self.damage, target.stats.hp);
-        target.stats.hp -= damage;
-        //print!("attack {} : {} damage", target.symbol, damage_applied);
-        Some(format!(
-            "{} attacks {} (-{} PV)",
-            source.symbol, target.symbol, damage
-        ))
     }
 }

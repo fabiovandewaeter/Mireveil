@@ -5,7 +5,7 @@ use color_eyre::Result;
 use crossterm::{event::EnableMouseCapture, execute};
 
 mod app;
-mod game_objects;
+mod entities;
 mod map;
 mod menu;
 mod systems;

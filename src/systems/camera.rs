@@ -2,7 +2,7 @@ use std::collections::HashSet;
 
 use ratatui::{layout::Rect, style::Color};
 
-use crate::{game_objects::entity::Entity, map::map::Map};
+use crate::{entities::entity::Entity, map::map::Map};
 
 // create a line between (x0, y0) and (x1, y1)
 fn bresenham_line(x0: i32, y0: i32, x1: i32, y1: i32) -> Vec<(i32, i32)> {

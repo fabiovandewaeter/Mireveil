@@ -2,7 +2,7 @@ use crossterm::event::KeyCode;
 use ratatui::{buffer::Buffer, layout::Rect};
 
 use crate::{
-    game_objects::entity::{Drawable, Entity},
+    entities::entity::{Drawable, Entity},
     map::map::Map,
     menu::Logger,
     systems::camera::update_visibility,

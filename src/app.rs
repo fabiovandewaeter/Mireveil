@@ -8,7 +8,7 @@ use ratatui::{
 };
 
 use crate::{
-    game_objects::entity::{Controller, Entity, EntityKind},
+    entities::entity::{Controller, Entity, EntityKind},
     map::map::*,
     menu::Menu,
     systems::{camera, entity_manager::EntityManager},
@@ -29,6 +29,7 @@ impl Default for Config {
         }
     }
 }
+
 pub struct App {
     map: Map,
     entity_manager: EntityManager,
@@ -114,7 +115,7 @@ impl App {
 
                     // try to find the entity at the coordiantes
                     if let Some(entity) = self.entity_manager.find_entity_at(world_x, world_y) {
-                        self.menu.selected_entity_info = Some(String::from(entity.symbol));
+                        self.menu.selected_entity_info = Some(String::from(entity.symbol()));
                         self.menu.selected_tile_info = None;
                     }
                     // otherwise gets the tile
