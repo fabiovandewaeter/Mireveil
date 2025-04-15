@@ -1,8 +1,8 @@
 use std::collections::HashSet;
 
-use ratatui::style::Color;
+use ratatui::{layout::Rect, style::Color};
 
-use crate::map::map::Map;
+use crate::{game_objects::entity::Entity, map::map::Map};
 
 // create a line between (x0, y0) and (x1, y1)
 fn bresenham_line(x0: i32, y0: i32, x1: i32, y1: i32) -> Vec<(i32, i32)> {
@@ -87,4 +87,11 @@ pub fn style_to_greyscale(color: Color) -> Color {
         }
         _ => Color::Gray, // if not RGB return Grey
     }
+}
+
+pub fn calculate_camera_position(player: &Entity, area: Rect) -> (i32, i32) {
+    (
+        player.position.0 - (area.width as i32 / 2),
+        player.position.1 - (area.height as i32 / 2),
+    )
 }

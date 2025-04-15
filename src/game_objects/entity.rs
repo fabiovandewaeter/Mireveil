@@ -5,7 +5,10 @@ use ratatui::{
     style::{Color, Style},
 };
 
-use crate::map::map::{CHUNK_SIZE, Map};
+use crate::{
+    map::map::{CHUNK_SIZE, Map},
+    menu::Logger,
+};
 
 pub trait Drawable {
     fn draw(&self, buffer: &mut Buffer, area: Rect, camera_position: (i32, i32));
@@ -18,7 +21,7 @@ pub enum EntityKind {
 }
 
 impl EntityKind {
-    pub fn symbol(&self) -> &'static str {
+    fn symbol(&self) -> &'static str {
         match self {
             EntityKind::Human => "@",
             EntityKind::Dragon => "D",
@@ -26,7 +29,7 @@ impl EntityKind {
         }
     }
 
-    pub fn style(&self) -> Style {
+    fn style(&self) -> Style {
         match self {
             EntityKind::Human => Style::default().fg(Color::Rgb(255, 255, 255)),
             EntityKind::Dragon => Style::default().fg(Color::Rgb(255, 0, 0)),
@@ -34,7 +37,7 @@ impl EntityKind {
         }
     }
 
-    pub fn stats(&self) -> EntityStats {
+    fn stats(&self) -> EntityStats {
         match self {
             EntityKind::Human => EntityStats {
                 max_hp: 100,
@@ -66,6 +69,20 @@ impl EntityKind {
             _ => EntityStats::default(),
         }
     }
+
+    fn actions(&self) -> Vec<Box<dyn EntityAction>> {
+        match self {
+            EntityKind::Human => {
+                vec![Box::new(Attack::new(10))]
+            }
+            EntityKind::Dragon => {
+                vec![Box::new(Attack::new(10))]
+            }
+            EntityKind::Sheep => {
+                vec![Box::new(Attack::new(10))]
+            }
+        }
+    }
 }
 
 // who controls the Entity
@@ -82,13 +99,14 @@ impl Controller {
         input: Option<KeyCode>,
         map: &mut Map,
         other_entities: I,
+        logger: &mut Logger,
     ) where
         I: Iterator<Item = &'a mut Entity>,
     {
         match self {
             Controller::Player => {
                 if let Some(key_code) = input {
-                    self.handle_player_input(entity, key_code, map, other_entities);
+                    self.handle_player_input(entity, key_code, map, other_entities, logger);
                 }
             }
             Controller::AI => {}
@@ -101,6 +119,7 @@ impl Controller {
         key_code: KeyCode,
         map: &mut Map,
         other_entities: I,
+        logger: &mut Logger,
     ) where
         I: Iterator<Item = &'a mut Entity>,
     {
@@ -115,7 +134,7 @@ impl Controller {
         let new_x = entity.position.0 + dx;
         let new_y = entity.position.1 + dy;
 
-        self.handle_entity_movement(entity, new_x, new_y, map, other_entities);
+        self.handle_entity_movement(entity, new_x, new_y, map, other_entities, logger);
     }
 
     fn handle_entity_movement<'a, I>(
@@ -124,13 +143,19 @@ impl Controller {
         new_x: i32,
         new_y: i32,
         map: &mut Map,
-        other_entities: I,
+        mut other_entities: I,
+        logger: &mut Logger,
     ) where
         I: Iterator<Item = &'a mut Entity>,
     {
-        /*if let Some(entity) = entities.find_entity_at(new_x, new_y) {
+        if let Some(target) = other_entities.find(|e| e.position == (new_x, new_y)) {
             // attack the entity
-        }*/
+            for action in &entity.actions {
+                if let Some(msg) = action.affect(entity, target) {
+                    logger.push_message(msg);
+                }
+            }
+        }
         if let Some(tile) = map.get_tile(new_x, new_y) {
             if !tile.solid {
                 entity.position = (new_x, new_y);
@@ -161,6 +186,7 @@ pub struct Entity {
     pub style: Style,
     pub controller: Controller,
     pub stats: EntityStats,
+    actions: Vec<Box<dyn EntityAction>>,
 }
 
 impl Entity {
@@ -171,6 +197,7 @@ impl Entity {
             style: kind.style(),
             controller,
             stats: kind.stats(),
+            actions: kind.actions(),
             kind,
         }
     }
@@ -179,12 +206,17 @@ impl Entity {
         Self::new(EntityKind::Human, position, Controller::Player)
     }
 
-    pub fn update<'a, I>(&mut self, input: Option<KeyCode>, map: &mut Map, other_entities: I)
-    where
+    pub fn update<'a, I>(
+        &mut self,
+        input: Option<KeyCode>,
+        map: &mut Map,
+        other_entities: I,
+        logger: &mut Logger,
+    ) where
         I: Iterator<Item = &'a mut Entity>,
     {
         let controller = self.controller;
-        controller.update_entity(self, input, map, other_entities);
+        controller.update_entity(self, input, map, other_entities, logger);
     }
 }
 
@@ -207,5 +239,33 @@ impl Drawable for Entity {
             cell.set_symbol(self.symbol);
             cell.set_style(self.style);
         }
+    }
+}
+
+trait EntityAction {
+    fn affect(&self, source: &Entity, target: &mut Entity) -> Option<String>;
+}
+
+struct Attack {
+    damage: u32,
+    // TODO: type, range etc.
+}
+
+impl Attack {
+    fn new(damage: u32) -> Self {
+        Self { damage }
+    }
+}
+
+impl EntityAction for Attack {
+    fn affect(&self, source: &Entity, target: &mut Entity) -> Option<String> {
+        // makes sure the target dont get negative hp
+        let damage = std::cmp::min(self.damage, target.stats.hp);
+        target.stats.hp -= damage;
+        //print!("attack {} : {} damage", target.symbol, damage_applied);
+        Some(format!(
+            "{} attacks {} (-{} PV)",
+            source.symbol, target.symbol, damage
+        ))
     }
 }

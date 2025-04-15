@@ -11,7 +11,8 @@ use ratatui::{
 use crate::{
     game_objects::entity::{Controller, Entity, EntityKind},
     map::map::*,
-    systems::entity_manager::EntityManager,
+    menu::Menu,
+    systems::{camera, entity_manager::EntityManager},
 };
 
 #[derive(Clone)]
@@ -29,31 +30,6 @@ impl Default for Config {
         }
     }
 }
-
-struct Menu {
-    visible: bool,
-    selected_tile_info: Option<String>,
-    selected_entity_info: Option<String>,
-}
-
-impl Menu {
-    fn area(&self, area: Rect) -> Rect {
-        let width = (area.width * 3) / 10;
-        Rect::new(area.right() - width, area.y, width, area.height)
-    }
-}
-
-impl Default for Menu {
-    // zone where the widget will be drawn
-    fn default() -> Self {
-        Self {
-            visible: false,
-            selected_tile_info: None,
-            selected_entity_info: None,
-        }
-    }
-}
-
 pub struct App {
     map: Map,
     entity_manager: EntityManager,
@@ -104,7 +80,9 @@ impl App {
             match key.code {
                 KeyCode::Char('q') => self.exit = true,
                 KeyCode::Char('e') => self.menu.visible = !self.menu.visible, // Toggle inventaire
-                _ => self.entity_manager.update(key.code, &mut self.map),
+                _ => self
+                    .entity_manager
+                    .update(key.code, &mut self.map, &mut self.menu.logger),
             }
         }
     }
@@ -129,7 +107,7 @@ impl App {
                     }
 
                     let (camera_x, camera_y) =
-                        self.calculate_camera_position(&self.entity_manager.player, screen_area);
+                        camera::calculate_camera_position(&self.entity_manager.player, screen_area);
 
                     // convert to map coordinates
                     let world_x = camera_x + click_x as i32;
@@ -154,64 +132,6 @@ impl App {
         }
     }
 
-    pub fn calculate_camera_position(&self, player: &Entity, area: Rect) -> (i32, i32) {
-        (
-            player.position.0 - (area.width as i32 / 2),
-            player.position.1 - (area.height as i32 / 2),
-        )
-    }
-
-    fn draw_menu(&self, frame: &mut Frame, area: Rect) {
-        // Récupère la zone du menu en fonction de l'aire globale
-        let menu_area = self.menu.area(area);
-        // Efface la zone pour éviter de laisser des résidus d'un rendu précédent
-        frame.render_widget(Clear, menu_area);
-
-        // Crée le block qui sert de cadre au menu
-        let block = Block::default()
-            .title(" Menu ")
-            .borders(Borders::ALL)
-            .border_style(Style::new().light_red())
-            .title_style(Style::new().white().bold())
-            .style(Style::new().bg(Color::Rgb(30, 30, 40)));
-        frame.render_widget(block, menu_area);
-
-        // Définir une zone intérieure pour le texte à l'intérieur du block
-        let inner_area = Rect::new(
-            menu_area.x + 1,
-            menu_area.y + 1,
-            menu_area.width - 2,
-            menu_area.height - 2,
-        );
-
-        // Construire un vecteur de Line pour le texte à afficher
-        let mut lines: Vec<Line> = Vec::new();
-
-        if let Some(ref entity_info) = self.menu.selected_entity_info {
-            lines.push(Line::from(Span::styled(
-                format!("Entity: {}", entity_info),
-                Style::default().fg(Color::Yellow),
-            )));
-        } else if let Some(ref tile_info) = self.menu.selected_tile_info {
-            lines.push(Line::from(Span::styled(
-                format!("Tile: {}", tile_info),
-                Style::default().fg(Color::Green),
-            )));
-        } else {
-            lines.push(Line::from(Span::styled(
-                "No selection",
-                Style::default().fg(Color::Gray),
-            )));
-        }
-
-        // Convertir le vecteur de Line en Text
-        let text = Text::from(lines);
-
-        // Créer et afficher un Paragraph avec le texte
-        let paragraph = Paragraph::new(text).wrap(Wrap { trim: true });
-        frame.render_widget(paragraph, inner_area);
-    }
-
     fn draw(&self, frame: &mut Frame) {
         let area = frame.area();
 
@@ -226,7 +146,7 @@ impl App {
 
         // draw map
         let (camera_x, camera_y) =
-            self.calculate_camera_position(&self.entity_manager.player, area);
+            camera::calculate_camera_position(&self.entity_manager.player, area);
         self.map.draw(buffer, area, (camera_x, camera_y));
 
         // draw entities
@@ -234,7 +154,7 @@ impl App {
 
         // draw menu
         if self.menu.visible {
-            self.draw_menu(frame, area);
+            self.menu.draw(frame, area);
         }
     }
 }

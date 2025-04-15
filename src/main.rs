@@ -7,6 +7,7 @@ use crossterm::{event::EnableMouseCapture, execute};
 mod app;
 mod game_objects;
 mod map;
+mod menu;
 mod systems;
 
 fn main() -> Result<()> {
