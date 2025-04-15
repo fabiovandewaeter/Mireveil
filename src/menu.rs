@@ -5,11 +5,15 @@ use ratatui::{
 
 pub struct Logger {
     pub logs: Vec<String>,
+    max_displayed_logs: u8,
 }
 
 impl Logger {
     pub fn new() -> Self {
-        Self { logs: Vec::new() }
+        Self {
+            logs: Vec::new(),
+            max_displayed_logs: 5,
+        }
     }
 
     pub fn push_message(&mut self, msg: String) {
@@ -77,10 +81,16 @@ impl Menu {
 
         // draw the logs
         lines.push(Line::from(Span::styled(
-            "Dernières actions:",
+            "Lastest actions:",
             Style::default().fg(Color::White).bold(),
         )));
-        for log in self.logger.logs.iter().rev().take(5) {
+        for log in self
+            .logger
+            .logs
+            .iter()
+            .rev()
+            .take(self.logger.max_displayed_logs as usize)
+        {
             lines.push(Line::from(Span::raw(log)));
         }
 
