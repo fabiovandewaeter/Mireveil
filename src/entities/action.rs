@@ -17,13 +17,18 @@ impl Attack {
 
 impl Action for Attack {
     fn affect(&self, source: &Entity, target: &mut Entity) -> Option<String> {
+        let target_was_alive = !target.is_dead();
         let actual_damage = target.take_damage(self.damage + source.stats.strength);
         Some(format!(
             "{} attacks {} (-{} PV){}",
             source.symbol(),
             target.symbol(),
             actual_damage,
-            if target.is_dead() { " and dies!" } else { "" }
+            if target_was_alive && target.is_dead() {
+                " and it died"
+            } else {
+                ""
+            }
         ))
     }
 }

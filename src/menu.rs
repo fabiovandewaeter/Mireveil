@@ -12,7 +12,7 @@ impl Logger {
     pub fn new() -> Self {
         Self {
             logs: Vec::new(),
-            max_displayed_logs: 5,
+            max_displayed_logs: 30,
         }
     }
 
@@ -104,7 +104,7 @@ impl Default for Menu {
     // zone where the widget will be drawn
     fn default() -> Self {
         Self {
-            visible: false,
+            visible: true,
             selected_tile_info: None,
             selected_entity_info: None,
             logger: Logger::new(),
