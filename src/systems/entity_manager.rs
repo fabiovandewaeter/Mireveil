@@ -2,10 +2,7 @@ use crossterm::event::KeyCode;
 use ratatui::{buffer::Buffer, layout::Rect};
 
 use crate::{
-    entities::entity::{Drawable, Entity},
-    map::map::Map,
-    menu::Logger,
-    systems::camera,
+    common::utils::Drawable, entities::entity::Entity, map::map::Map, menu::Logger, systems::camera,
 };
 
 pub struct EntityManager {

@@ -8,7 +8,9 @@ use crossterm::{
 };
 
 mod app;
+mod common;
 mod entities;
+mod items;
 mod map;
 mod menu;
 mod systems;

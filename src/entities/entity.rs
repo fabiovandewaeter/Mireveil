@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use crossterm::event::KeyCode;
 use ratatui::{
     buffer::Buffer,
@@ -6,17 +8,18 @@ use ratatui::{
 };
 
 use crate::{
+    common::utils::Drawable,
     entities::action::Attack,
+    items::item::{Boots, Equipable, EquipmentSlot, Helmet, Leggings, Sword},
     map::map::{CHUNK_SIZE, Map},
     menu::Logger,
-    systems::{camera::style_to_greyscale, level_manager::LevelManager},
+    systems::{
+        camera::{style_to_greyscale, visible_on_screen},
+        level_manager::LevelManager,
+    },
 };
 
 use super::action::Action;
-
-pub trait Drawable {
-    fn draw(&self, buffer: &mut Buffer, area: Rect, camera_position: (i32, i32));
-}
 
 #[derive(Clone, Copy)]
 pub enum EntityKind {
@@ -90,7 +93,7 @@ impl EntityKind {
     }
 }
 
-// who controls the Entity
+/// who controls the Entity
 #[derive(Copy, Clone)]
 pub enum Controller {
     Player,
@@ -218,10 +221,20 @@ pub struct Entity {
     xp_drop: u32,
     level_manager: LevelManager,
     actions: Vec<Box<dyn Action>>,
+    //equipment: HashMap<EquipmentSlot, Box<dyn Equipable>>,
 }
 
 impl Entity {
     pub fn new(kind: EntityKind, position: (i32, i32), controller: Controller) -> Self {
+        /*let mut items_example = HashMap::new();
+        items_example.insert(EquipmentSlot::MainHand, Item::Weapon(Sword { damage: 10 }));
+        items_example.insert(EquipmentSlot::Head, Item::Armor(Helmet { defense: 10 }));
+        items_example.insert(
+            EquipmentSlot::Chest,
+            Item::Armor(Chestplate { defense: 10 }),
+        );
+        items_example.insert(EquipmentSlot::Legs, Item::Armor(Leggings { defense: 10 }));
+        items_example.insert(EquipmentSlot::Feet, Item::Armor(Boots { defense: 10 }));*/
         Self {
             position,
             controller,
@@ -230,6 +243,7 @@ impl Entity {
             level_manager: LevelManager::default(),
             actions: kind.actions(),
             kind,
+            //equipment: items_example,
         }
     }
 
@@ -267,6 +281,19 @@ impl Entity {
     pub fn is_dead(&self) -> bool {
         self.stats.hp == 0
     }
+
+    /*fn equip_item(&mut self, item: Box<dyn Equipable>) {
+        let slot = item.get_slot();
+        if let Some(prev) = self.equipment.remove(&slot) {
+            self.add_inventory(prev);
+        }
+
+        self.equipment.insert(slot, item);
+    }
+
+    fn add_inventory(&mut self, item: &Item){
+        self.inventory.
+    }*/
 }
 
 impl Drawable for Entity {
@@ -275,11 +302,12 @@ impl Drawable for Entity {
         let screen_y = self.position.1 - camera_position.1;
 
         // only draw if the Entity is close enough to the camera
-        if screen_x >= 0
-            && screen_x < area.width as i32
-            && screen_y >= 0
-            && screen_y < area.height as i32
-        {
+        /*if screen_x >= 0
+        && screen_x < area.width as i32
+        && screen_y >= 0
+        && screen_y < area.height as i32
+        */
+        if visible_on_screen(&self, area, camera_position) {
             let position: Position = Position {
                 x: screen_x as u16,
                 y: screen_y as u16,
