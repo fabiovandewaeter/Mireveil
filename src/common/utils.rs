@@ -1,5 +1,7 @@
 use ratatui::{buffer::Buffer, layout::Rect};
 
+use crate::systems::camera::Camera;
+
 pub trait Drawable {
-    fn draw(&self, buffer: &mut Buffer, area: Rect, camera_position: (i32, i32));
+    fn draw(&self, buffer: &mut Buffer, area: Rect, camera: &Camera);
 }

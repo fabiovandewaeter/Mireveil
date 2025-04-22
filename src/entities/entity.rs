@@ -13,10 +13,7 @@ use crate::{
     items::item::{EquipmentSlot, Item, ItemKind, WeaponData},
     map::map::{CHUNK_SIZE, Map},
     menu::Logger,
-    systems::{
-        camera::{style_to_greyscale, visible_on_screen},
-        level_manager::LevelManager,
-    },
+    systems::{camera::Camera, level_manager::LevelManager},
 };
 
 use super::action::Action;
@@ -163,7 +160,9 @@ impl Controller {
     ) where
         I: Iterator<Item = &'a mut Entity>,
     {
-        if let Some(target) = other_entities.find(|e| e.position == (new_x, new_y)) {
+        if let Some(target) =
+            other_entities.find(|e| e.position == (new_x, new_y, entity.position.2))
+        {
             let target_was_alive = !target.is_dead();
             // attack the entity
             for action in &entity.actions {
@@ -180,12 +179,13 @@ impl Controller {
                 Self::handle_xp_gain(entity, target, logger);
             }
         }
-        if let Some(tile) = map.get_tile(new_x, new_y, map.visible_layer) {
+        if let Some(tile) = map.get_tile(new_x, new_y, entity.position.2) {
             if !tile.solid {
-                entity.position = (new_x, new_y);
+                entity.position = (new_x, new_y, entity.position.2);
                 map.load_around((
                     new_x.div_euclid(CHUNK_SIZE as i32),
                     new_y.div_euclid(CHUNK_SIZE as i32),
+                    entity.position.2,
                 ));
             }
         }
@@ -237,7 +237,7 @@ impl Inventory {
 pub struct Entity {
     kind: EntityKind,
     pub name: String,
-    pub position: (i32, i32),
+    pub position: (i32, i32, i32),
     controller: Controller,
     pub stats: EntityStats,
     xp_drop: u32,
@@ -251,7 +251,7 @@ impl Entity {
     pub fn new(
         kind: EntityKind,
         name: String,
-        position: (i32, i32),
+        position: (i32, i32, i32),
         controller: Controller,
     ) -> Self {
         Self {
@@ -276,7 +276,7 @@ impl Entity {
         self.kind.style()
     }
 
-    pub fn player(position: (i32, i32)) -> Self {
+    pub fn player(position: (i32, i32, i32)) -> Self {
         let god_sword = Item::new_weapon(
             "GodSword".to_string(),
             "GodSword to test items".to_string(),
@@ -339,12 +339,12 @@ impl Entity {
 }
 
 impl Drawable for Entity {
-    fn draw(&self, buffer: &mut Buffer, area: Rect, camera_position: (i32, i32)) {
-        let screen_x = self.position.0 - camera_position.0;
-        let screen_y = self.position.1 - camera_position.1;
+    fn draw(&self, buffer: &mut Buffer, area: Rect, camera: &Camera) {
+        let screen_x = self.position.0 - camera.position.0;
+        let screen_y = self.position.1 - camera.position.1;
 
         // only draws if the Entity is close enough to the camera
-        if visible_on_screen(&self, area, camera_position) {
+        if camera.is_point_on_screen(self.position, area) {
             let position: Position = Position {
                 x: screen_x as u16,
                 y: screen_y as u16,
@@ -355,7 +355,7 @@ impl Drawable for Entity {
 
             // changes the style and symbol if the entity is dead
             if self.is_dead() {
-                style = style.fg(style_to_greyscale(style.fg.unwrap_or(Color::Gray)));
+                style = style.fg(Camera::style_to_greyscale(style.fg.unwrap_or(Color::Gray)));
                 symbol = "†";
             }
 

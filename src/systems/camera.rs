@@ -2,104 +2,155 @@ use std::collections::HashSet;
 
 use ratatui::{layout::Rect, style::Color};
 
-use crate::{entities::entity::Entity, map::map::Map};
+use crate::map::map::Map;
 
-/// create a line between (x0, y0) and (x1, y1)
-fn bresenham_line(x0: i32, y0: i32, x1: i32, y1: i32) -> Vec<(i32, i32)> {
-    let mut points = Vec::new();
-
-    let dx = (x1 - x0).abs();
-    let dy = -(y1 - y0).abs();
-    let mut err = dx + dy;
-    let mut x = x0;
-    let mut y = y0;
-    let sx = if x0 < x1 { 1 } else { -1 };
-    let sy = if y0 < y1 { 1 } else { -1 };
-
-    loop {
-        points.push((x, y));
-        if x == x1 && y == y1 {
-            break;
-        }
-        let e2 = 2 * err;
-        if e2 >= dy {
-            err += dy;
-            x += sx;
-        }
-        if e2 <= dx {
-            err += dx;
-            y += sy;
-        }
-    }
-    points
+pub struct Camera {
+    pub position: (i32, i32, i32),
+    pub visible_layer: i32,
+    /// the size of the screen
+    pub screen_area: Rect,
 }
 
-/// compute all line of sight to finds tiles that are visible by the player
-pub fn in_line_of_sight(start: (i32, i32), target: (i32, i32), map: &Map) -> bool {
-    let line = bresenham_line(start.0, start.1, target.0, target.1);
-    for (i, &(x, y)) in line.iter().enumerate().skip(1) {
-        // if it's the target it means its visible
-        if (x, y) == target {
-            return true;
-        }
-        if let Some(tile) = map.get_tile(x, y, map.visible_layer) {
-            if tile.block_sight {
-                return false;
-            }
-        } else {
-            return false;
+impl Camera {
+    pub fn new(starting_position: (i32, i32, i32), screen_area: Rect) -> Camera {
+        Self {
+            position: starting_position,
+            visible_layer: 0,
+            screen_area,
         }
     }
-    true
-}
 
-fn compute_fov(center: (i32, i32), range: i32, map: &Map) -> HashSet<(i32, i32)> {
-    let mut visible = HashSet::new();
-    for y in (center.1 - range)..=(center.1 + range) {
-        for x in (center.0 - range)..=(center.0 + range) {
-            let dx = x - center.0;
-            let dy = y - center.1;
-            if dx * dx + dy * dy <= range * range {
-                if in_line_of_sight(center, (x, y), map) {
-                    visible.insert((x, y));
+    fn compute_fov(
+        &self,
+        player_position: (i32, i32),
+        range: i32,
+        map: &Map,
+    ) -> HashSet<(i32, i32)> {
+        let center = self.get_center(player_position, self.screen_area);
+        let mut visible = HashSet::new();
+        for y in (center.1 - range)..=(center.1 + range) {
+            for x in (center.0 - range)..=(center.0 + range) {
+                let dx = x - center.0;
+                let dy = y - center.1;
+                if dx * dx + dy * dy <= range * range {
+                    if self.in_line_of_sight(center, (x, y), map) {
+                        visible.insert((x, y));
+                    }
                 }
             }
         }
+        visible
     }
-    visible
-}
 
-/// update list of visible tiles of the map
-pub fn update_visibility(player_pos: (i32, i32), range: i32, map: &mut Map) {
-    let visible = compute_fov(player_pos, range, map);
-    map.visible_tiles = visible.clone();
-    for pos in visible {
-        map.revealed_tiles.insert(pos);
-    }
-}
-
-/// returns a grayed-out version of the RGB color
-pub fn style_to_greyscale(color: Color) -> Color {
-    match color {
-        Color::Rgb(r, g, b) => {
-            let grey = ((r as u16 + g as u16 + b as u16) / 3) as u8;
-            Color::Rgb(grey, grey, grey)
+    /// updates list of visible tiles of the map
+    pub fn update_visibility(&self, player_position: (i32, i32), range: i32, map: &mut Map) {
+        let visible = self.compute_fov(player_position, range, map);
+        map.visible_tiles = visible.clone();
+        for pos in visible {
+            map.revealed_tiles.insert(pos);
         }
-        _ => Color::Gray, // if not RGB return Grey
     }
-}
 
-pub fn calculate_camera_position(player: &Entity, area: Rect) -> (i32, i32) {
-    (
-        player.position.0 - (area.width as i32 / 2),
-        player.position.1 - (area.height as i32 / 2),
-    )
-}
+    /// returns a grayed-out version of the RGB color
+    pub fn style_to_greyscale(color: Color) -> Color {
+        match color {
+            Color::Rgb(r, g, b) => {
+                let grey = ((r as u16 + g as u16 + b as u16) / 3) as u8;
+                Color::Rgb(grey, grey, grey)
+            }
+            _ => Color::Gray, // if not RGB return Grey
+        }
+    }
 
-/// returns true if the entity is visible by the camera, false otherwise
-pub fn visible_on_screen(entity: &Entity, area: Rect, camera_position: (i32, i32)) -> bool {
-    let screen_x = entity.position.0 - camera_position.0;
-    let screen_y = entity.position.1 - camera_position.1;
+    pub fn get_center(&self, player_position: (i32, i32), area: Rect) -> (i32, i32) {
+        (
+            player_position.0 - (area.width as i32 / 2),
+            player_position.1 - (area.height as i32 / 2),
+        )
+    }
 
-    screen_x >= 0 && screen_x < area.width as i32 && screen_y >= 0 && screen_y < area.height as i32
+    /// returns true if the point is visible by the camera, false otherwise
+    pub fn is_point_on_screen(&self, positions: (i32, i32, i32), area: Rect) -> bool {
+        let screen_x = positions.0 - self.position.0;
+        let screen_y = positions.1 - self.position.1;
+
+        screen_x >= 0
+            && screen_x < area.width as i32
+            && screen_y >= 0
+            && screen_y < area.height as i32
+    }
+
+    /// returns true if the rect is visible by the camera, false otherwise
+    pub fn is_rect_on_screen(
+        &self,
+        top_left_coordinates: (i32, i32, i32),
+        dimensions: (i32, i32),
+        area: Rect,
+    ) -> bool {
+        // Rectangle bounds in world coordinates
+        let (left, top) = (top_left_coordinates.0, top_left_coordinates.1);
+        let right = left + dimensions.0;
+        let bottom = top + dimensions.1;
+
+        // Screen bounds in world coordinates
+        let screen_left = self.position.0;
+        let screen_top = self.position.1;
+        let screen_right = self.position.0 + area.width as i32;
+        let screen_bottom = self.position.1 + area.height as i32;
+
+        // Check for overlap between the two rectangles
+        !(right <= screen_left
+            || left >= screen_right
+            || bottom <= screen_top
+            || top >= screen_bottom)
+    }
+
+    /// create a line between (x0, y0) and (x1, y1)
+    fn bresenham_line(x0: i32, y0: i32, x1: i32, y1: i32) -> Vec<(i32, i32)> {
+        let mut points = Vec::new();
+
+        let dx = (x1 - x0).abs();
+        let dy = -(y1 - y0).abs();
+        let mut err = dx + dy;
+        let mut x = x0;
+        let mut y = y0;
+        let sx = if x0 < x1 { 1 } else { -1 };
+        let sy = if y0 < y1 { 1 } else { -1 };
+
+        loop {
+            points.push((x, y));
+            if x == x1 && y == y1 {
+                break;
+            }
+            let e2 = 2 * err;
+            if e2 >= dy {
+                err += dy;
+                x += sx;
+            }
+            if e2 <= dx {
+                err += dx;
+                y += sy;
+            }
+        }
+        points
+    }
+
+    /// compute all line of sight to finds tiles that are visible by the player
+    pub fn in_line_of_sight(&self, start: (i32, i32), target: (i32, i32), map: &Map) -> bool {
+        let line = Self::bresenham_line(start.0, start.1, target.0, target.1);
+        for (i, &(x, y)) in line.iter().enumerate().skip(1) {
+            // if it's the target it means its visible
+            if (x, y) == target {
+                return true;
+            }
+            if let Some(tile) = map.get_tile(x, y, self.visible_layer) {
+                if tile.block_sight {
+                    return false;
+                }
+            } else {
+                return false;
+            }
+        }
+        true
+    }
 }

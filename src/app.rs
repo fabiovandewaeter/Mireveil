@@ -8,11 +8,12 @@ use ratatui::{
 };
 
 use crate::{
+    common::utils::Drawable,
     entities::entity::{Controller, Entity, EntityKind},
     map::map::*,
     menu::Menu,
     systems::{
-        camera,
+        camera::{self, Camera},
         entity_manager::EntityManager,
         spawner::{Spawner, SpawnerConfiguration},
     },
@@ -40,6 +41,7 @@ pub struct App {
     config: Config,
     exit: bool,
     menu: Menu,
+    camera: Camera,
 }
 
 impl App {
@@ -48,13 +50,13 @@ impl App {
         entity_manager.add_entity(Entity::new(
             EntityKind::Dragon,
             EntityKind::Dragon.name().to_owned(),
-            (0, 1),
+            (0, 1, 0),
             Controller::AI,
         ));
         entity_manager.add_entity(Entity::new(
             EntityKind::Sheep,
             EntityKind::Sheep.name().to_owned(),
-            (1, 0),
+            (1, 0, 0),
             Controller::AI,
         ));
         Self {
@@ -63,6 +65,7 @@ impl App {
             config,
             exit: false,
             menu: Menu::default(),
+            camera: Camera::new((0, 0, 0)),
         }
     }
 
@@ -125,7 +128,7 @@ impl App {
                     }
 
                     let (camera_x, camera_y) =
-                        camera::calculate_camera_position(&self.entity_manager.player, screen_area);
+                        Camera::calculate_camera_position(&self.entity_manager.player, screen_area);
 
                     // convert to map coordinates
                     let world_x = camera_x + click_x as i32;
@@ -138,7 +141,8 @@ impl App {
                     }
                     // otherwise gets the tile
                     else if let Some(tile) =
-                        self.map.get_tile(world_x, world_y, self.map.visible_layer)
+                        self.map
+                            .get_tile(world_x, world_y, self.camera.visible_layer)
                     {
                         self.menu.selected_tile_info = Some(String::from(tile.symbol));
                         self.menu.selected_entity_info = None;
@@ -157,7 +161,7 @@ impl App {
     fn draw(&self, frame: &mut Frame) {
         let area = frame.area();
 
-        // draw background color
+        // draws background color
         let background = Block::default()
             .style(self.config.background_style)
             .borders(Borders::NONE);
@@ -166,15 +170,15 @@ impl App {
         //let (camera_x, camera_y) = self.player.calculate_camera(area);
         let buffer = frame.buffer_mut();
 
-        // draw map
+        // draws map
         let (camera_x, camera_y) =
-            camera::calculate_camera_position(&self.entity_manager.player, area);
-        self.map.draw(buffer, area, (camera_x, camera_y));
+            Camera::calculate_camera_position(&self.entity_manager.player, area);
+        self.map.draw(buffer, area, &self.camera);
 
-        // draw entities
+        // draws entities
         self.entity_manager.draw(buffer, area, (camera_x, camera_y));
 
-        // draw menu
+        // draws menu
         if self.menu.visible {
             self.menu.draw(frame, area);
         }
