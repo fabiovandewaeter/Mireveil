@@ -76,10 +76,10 @@ impl Spawner {
         let chosen_kind = kinds[dist.sample(&mut rng)];
 
         // spawn around player or world spawn (0,0)
-        let (base_x, base_y) = if self.config.spawn_around_player {
+        let (base_x, base_y, layer) = if self.config.spawn_around_player {
             entity_manager.player.position
         } else {
-            (0, 0)
+            (0, 0, 0)
         };
 
         let offset_x = rng.random_range(-self.config.spawn_radius..=self.config.spawn_radius);
@@ -87,17 +87,16 @@ impl Spawner {
         let spawn_x = base_x + offset_x;
         let spawn_y = base_y + offset_y;
 
-        if entity_manager.find_entity_at(spawn_x, spawn_y).is_none()
-            && !map
-                .get_tile(spawn_x, spawn_y, map.visible_layer)
-                .unwrap()
-                .solid
+        if entity_manager
+            .find_entity_at((spawn_x, spawn_y, entity_manager.player.position.2))
+            .is_none()
+            && !map.get_tile(spawn_x, spawn_y, layer).unwrap().solid
         {
             self.last_spawn = now;
             let new_entity = Entity::new(
                 chosen_kind,
                 chosen_kind.name().to_owned(),
-                (spawn_x, spawn_y),
+                (spawn_x, spawn_y, layer),
                 Controller::AI,
             );
             // only spawns the entity if there is not too many entities on the map

@@ -148,7 +148,7 @@ impl Drawable for Chunk {
                     // Appliquer la conversion en niveaux de gris
                     let mut revealed_style = tile.style;
                     if let Some(fg) = revealed_style.fg {
-                        revealed_style.fg = Some(style_to_greyscale(fg));
+                        revealed_style.fg = Some(Camera::style_to_greyscale(fg));
                     }
                     revealed_style
                 };
@@ -193,9 +193,7 @@ impl Map {
     pub fn load_around(&mut self, point: (i32, i32, i32)) {
         for y in (point.1 - LOAD_DISTANCE)..=(point.1 + LOAD_DISTANCE) {
             for x in (point.0 - LOAD_DISTANCE)..=(point.0 + LOAD_DISTANCE) {
-                self.chunks
-                    .entry((x, y))
-                    .or_insert_with(|| Chunk::new(x, y, point.2));
+                self.load_chunk(x, y, point.2);
             }
         }
     }

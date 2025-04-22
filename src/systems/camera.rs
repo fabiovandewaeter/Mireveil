@@ -7,33 +7,29 @@ use crate::map::map::Map;
 pub struct Camera {
     pub position: (i32, i32, i32),
     pub visible_layer: i32,
-    /// the size of the screen
-    pub screen_area: Rect,
 }
 
 impl Camera {
-    pub fn new(starting_position: (i32, i32, i32), screen_area: Rect) -> Camera {
+    pub fn new(starting_position: (i32, i32, i32)) -> Camera {
         Self {
             position: starting_position,
             visible_layer: 0,
-            screen_area,
         }
     }
 
     fn compute_fov(
         &self,
-        player_position: (i32, i32),
+        player_position: (i32, i32, i32),
         range: i32,
         map: &Map,
     ) -> HashSet<(i32, i32)> {
-        let center = self.get_center(player_position, self.screen_area);
         let mut visible = HashSet::new();
-        for y in (center.1 - range)..=(center.1 + range) {
-            for x in (center.0 - range)..=(center.0 + range) {
-                let dx = x - center.0;
-                let dy = y - center.1;
+        for y in (player_position.1 - range)..=(player_position.1 + range) {
+            for x in (player_position.0 - range)..=(player_position.0 + range) {
+                let dx = x - player_position.0;
+                let dy = y - player_position.1;
                 if dx * dx + dy * dy <= range * range {
-                    if self.in_line_of_sight(center, (x, y), map) {
+                    if self.in_line_of_sight(player_position, (x, y), map) {
                         visible.insert((x, y));
                     }
                 }
@@ -42,12 +38,23 @@ impl Camera {
         visible
     }
 
-    /// updates list of visible tiles of the map
-    pub fn update_visibility(&self, player_position: (i32, i32), range: i32, map: &mut Map) {
+    pub fn update_visibility(&self, player_position: (i32, i32, i32), range: i32, map: &mut Map) {
+        // computes FOV for player
         let visible = self.compute_fov(player_position, range, map);
-        map.visible_tiles = visible.clone();
-        for pos in visible {
-            map.revealed_tiles.insert(pos);
+
+        // reset visible tiles
+        for chunk in map.chunks.values_mut() {
+            chunk.visible_tiles.clear();
+        }
+
+        // updates visible tiles
+        for (global_x, global_y) in visible {
+            let chunk_coords = Map::convert_to_chunk_coordinates(global_x, global_y);
+
+            if let Some(chunk) = map.chunks.get_mut(&chunk_coords) {
+                chunk.visible_tiles.insert((global_x, global_y));
+                chunk.revealed_tiles.insert((global_x, global_y));
+            }
         }
     }
 
@@ -136,7 +143,7 @@ impl Camera {
     }
 
     /// compute all line of sight to finds tiles that are visible by the player
-    pub fn in_line_of_sight(&self, start: (i32, i32), target: (i32, i32), map: &Map) -> bool {
+    pub fn in_line_of_sight(&self, start: (i32, i32, i32), target: (i32, i32), map: &Map) -> bool {
         let line = Self::bresenham_line(start.0, start.1, target.0, target.1);
         for (i, &(x, y)) in line.iter().enumerate().skip(1) {
             // if it's the target it means its visible

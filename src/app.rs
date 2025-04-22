@@ -101,9 +101,12 @@ impl App {
             match key.code {
                 KeyCode::Char('q') => self.exit = true,
                 KeyCode::Char('e') => self.menu.visible = !self.menu.visible, // Toggle inventaire
-                _ => self
-                    .entity_manager
-                    .update(key.code, &mut self.map, &mut self.menu.logger),
+                _ => self.entity_manager.update(
+                    key.code,
+                    &self.camera,
+                    &mut self.map,
+                    &mut self.menu.logger,
+                ),
             }
         }
     }
@@ -127,15 +130,20 @@ impl App {
                         return;
                     }
 
-                    let (camera_x, camera_y) =
-                        Camera::calculate_camera_position(&self.entity_manager.player, screen_area);
+                    let player_position = &self.entity_manager.player.position;
+                    let (camera_x, camera_y) = self
+                        .camera
+                        .get_center((player_position.0, player_position.1), screen_area);
 
-                    // convert to map coordinates
+                    // converts to map coordinates
                     let world_x = camera_x + click_x as i32;
                     let world_y = camera_y + click_y as i32;
 
                     // try to find the entity at the coordiantes
-                    if let Some(entity) = self.entity_manager.find_entity_at(world_x, world_y) {
+                    if let Some(entity) =
+                        self.entity_manager
+                            .find_entity_at((world_x, world_y, player_position.2))
+                    {
                         self.menu.selected_entity_info = Some(String::from(entity.symbol()));
                         self.menu.selected_tile_info = None;
                     }
@@ -171,12 +179,10 @@ impl App {
         let buffer = frame.buffer_mut();
 
         // draws map
-        let (camera_x, camera_y) =
-            Camera::calculate_camera_position(&self.entity_manager.player, area);
         self.map.draw(buffer, area, &self.camera);
 
         // draws entities
-        self.entity_manager.draw(buffer, area, (camera_x, camera_y));
+        self.entity_manager.draw(buffer, area, &self.camera);
 
         // draws menu
         if self.menu.visible {
