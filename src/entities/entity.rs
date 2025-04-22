@@ -135,21 +135,21 @@ impl Controller {
     ) where
         I: Iterator<Item = &'a mut Entity>,
     {
-        let (mut dx, mut dy) = (0, 0);
-        match key_code {
-            KeyCode::Up => (dx, dy) = (0, -1),
-            KeyCode::Down => (dx, dy) = (0, 1),
-            KeyCode::Left => (dx, dy) = (-1, 0),
-            KeyCode::Right => (dx, dy) = (1, 0),
-            KeyCode::Char('y') => entity.position.2 += 1,
-            KeyCode::Char('u') => entity.position.2 -= 1,
-            _ => {}
+        let (dx, dy, dz) = match key_code {
+            KeyCode::Up => (0, -1, 0),
+            KeyCode::Down => (0, 1, 0),
+            KeyCode::Left => (-1, 0, 0),
+            KeyCode::Right => (1, 0, 0),
+            KeyCode::Char('y') => (0, 0, 1),
+            KeyCode::Char('u') => (0, 0, -1),
+            _ => (0, 0, 0),
         };
 
         let new_x = entity.position.0 + dx;
         let new_y = entity.position.1 + dy;
+        let new_z = entity.position.2 + dz;
 
-        self.handle_entity_movement(entity, new_x, new_y, map, other_entities, logger);
+        self.handle_entity_movement(entity, new_x, new_y, new_z, map, other_entities, logger);
     }
 
     fn handle_entity_movement<'a, I>(
@@ -157,17 +157,16 @@ impl Controller {
         entity: &mut Entity,
         new_x: i32,
         new_y: i32,
+        new_z: i32,
         map: &mut Map,
         mut other_entities: I,
         logger: &mut Logger,
     ) where
         I: Iterator<Item = &'a mut Entity>,
     {
-        if let Some(target) =
-            other_entities.find(|e| e.position == (new_x, new_y, entity.position.2))
-        {
+        if let Some(target) = other_entities.find(|e| e.position == (new_x, new_y, new_z)) {
             let target_was_alive = !target.is_dead();
-            // attack the entity
+            // attacks the entity
             for action in &entity.actions {
                 if let Some(msg) = action.affect(entity, target) {
                     logger.push_message(msg);
@@ -182,14 +181,16 @@ impl Controller {
                 Self::handle_xp_gain(entity, target, logger);
             }
         }
-        if let Some(tile) = map.get_tile(new_x, new_y, entity.position.2) {
+        // TODO: remove that line
+        entity.position.2 = new_z;
+        map.load_around((
+            new_x.div_euclid(CHUNK_SIZE as i32),
+            new_y.div_euclid(CHUNK_SIZE as i32),
+            new_z,
+        ));
+        if let Some(tile) = map.get_tile(new_x, new_y, new_z) {
             if !tile.solid {
-                entity.position = (new_x, new_y, entity.position.2);
-                map.load_around((
-                    new_x.div_euclid(CHUNK_SIZE as i32),
-                    new_y.div_euclid(CHUNK_SIZE as i32),
-                    entity.position.2,
-                ));
+                entity.position = (new_x, new_y, new_z);
             }
         }
     }
@@ -246,7 +247,7 @@ pub struct Entity {
     xp_drop: u32,
     level_manager: LevelManager,
     actions: Vec<Box<dyn Action>>,
-    pub equipment: HashMap<EquipmentSlot, Item>,
+    equipment: HashMap<EquipmentSlot, Item>,
     inventory: Inventory,
 }
 
@@ -346,8 +347,9 @@ impl Drawable for Entity {
         let screen_x = self.position.0 - camera.position.0;
         let screen_y = self.position.1 - camera.position.1;
 
-        // only draws if the Entity is close enough to the camera
-        if camera.is_point_on_screen(self.position, area) {
+        // only draws if the Entity is close enough to the camera and on the visible layer
+        if camera.is_point_on_screen(self.position, area) && self.position.2 == camera.visible_layer
+        {
             let position: Position = Position {
                 x: screen_x as u16,
                 y: screen_y as u16,

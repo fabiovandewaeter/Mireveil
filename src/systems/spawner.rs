@@ -15,7 +15,7 @@ use super::entity_manager::EntityManager;
 
 pub struct SpawnerConfiguration {
     interval: Duration,
-    // spawn entities only if total quantity of entities is lower to max_entities
+    // spawns entities only if total quantity of entities is lower to max_entities
     max_entities: usize,
     spawn_radius: i32,
     spawn_around_player: bool,
@@ -75,7 +75,7 @@ impl Spawner {
             .expect("Error creating WeightedIndex in Spawner::try_spawn()");
         let chosen_kind = kinds[dist.sample(&mut rng)];
 
-        // spawn around player or world spawn (0,0)
+        // spawns around player or world spawn (0,0)
         let (base_x, base_y, layer) = if self.config.spawn_around_player {
             entity_manager.player.position
         } else {
@@ -87,10 +87,15 @@ impl Spawner {
         let spawn_x = base_x + offset_x;
         let spawn_y = base_y + offset_y;
 
-        if entity_manager
-            .find_entity_at((spawn_x, spawn_y, entity_manager.player.position.2))
-            .is_none()
-            && !map.get_tile(spawn_x, spawn_y, layer).unwrap().solid
+        // can spawn if the tile exists and its not a solid tile
+        let can_spawn = match map.get_tile(spawn_x, spawn_y, layer) {
+            Some(tile) => !tile.solid,
+            None => false,
+        };
+        if can_spawn
+            && entity_manager
+                .find_entity_at((spawn_x, spawn_y, entity_manager.player.position.2))
+                .is_none()
         {
             self.last_spawn = now;
             let new_entity = Entity::new(

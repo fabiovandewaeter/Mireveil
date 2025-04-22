@@ -11,15 +11,83 @@ pub const CHUNK_SIZE: u16 = 32;
 /// distance in chunk chunks are loaded
 pub const LOAD_DISTANCE: i32 = 2;
 
-/// a Chunk is made up of several layers of CHUNK_SIZE*CHUNK_SIZE tiles
-pub struct Chunk {
-    /// layers are squares of CHUNK_SIZE*CHUNK_SIZE tiles
-    pub layers: HashMap<i32, Vec<Vec<Tile>>>,
-    pub position: (i32, i32),
+/// layers are squares of CHUNK_SIZE*CHUNK_SIZE tiles
+pub struct Layer {
+    tiles: Vec<Vec<Tile>>,
+    position: (i32, i32),
     /// coordinates of tiles that will be drawn
     pub visible_tiles: HashSet<(i32, i32)>,
     /// coordinates of tiles that were seen and will be drawn in black and white
     pub revealed_tiles: HashSet<(i32, i32)>,
+}
+
+impl Layer {
+    pub fn new(tiles: Vec<Vec<Tile>>, position: (i32, i32)) -> Self {
+        Self {
+            tiles,
+            position,
+            visible_tiles: HashSet::new(),
+            revealed_tiles: HashSet::new(),
+        }
+    }
+}
+
+impl Drawable for Layer {
+    fn draw(&self, buffer: &mut Buffer, area: Rect, camera: &Camera) {
+        let (chunk_world_x, chunk_world_y) = self.position;
+
+        for (local_y, row) in self.tiles.iter().enumerate() {
+            for (local_x, tile) in row.iter().enumerate() {
+                let global_x = chunk_world_x + local_x as i32;
+                let global_y = chunk_world_y + local_y as i32;
+
+                let is_visible = self.visible_tiles.contains(&(global_x, global_y));
+                let is_revealed = self.revealed_tiles.contains(&(global_x, global_y));
+
+                if !is_visible && !is_revealed {
+                    continue;
+                }
+
+                let screen_x = global_x - camera.position.0;
+                let screen_y = global_y - camera.position.1;
+
+                if screen_x < 0
+                    || screen_x >= area.width as i32
+                    || screen_y < 0
+                    || screen_y >= area.height as i32
+                {
+                    continue;
+                }
+
+                let style = if is_visible {
+                    tile.style
+                } else {
+                    let mut revealed_style = tile.style;
+                    if let Some(fg) = revealed_style.fg {
+                        revealed_style.fg = Some(Camera::style_to_greyscale(fg));
+                    }
+                    revealed_style
+                };
+
+                let buffer_x = area.x + screen_x as u16;
+                let buffer_y = area.y + screen_y as u16;
+
+                if buffer_x >= area.right() || buffer_y >= area.bottom() {
+                    continue;
+                }
+
+                let cell = buffer.cell_mut((buffer_x, buffer_y)).unwrap();
+                cell.set_symbol(&tile.symbol);
+                cell.set_style(style);
+            }
+        }
+    }
+}
+
+/// a Chunk is made up of several layers of CHUNK_SIZE*CHUNK_SIZE tiles
+pub struct Chunk {
+    pub layers: HashMap<i32, Layer>,
+    pub position: (i32, i32),
 }
 
 impl Chunk {
@@ -41,13 +109,14 @@ impl Chunk {
             })
             .collect();
 
+        let world_x = chunk_x * CHUNK_SIZE as i32;
+        let world_y = chunk_y * CHUNK_SIZE as i32;
+
         let mut layers = HashMap::new();
-        layers.insert(layer, tiles);
+        layers.insert(layer, Layer::new(tiles, (world_x, world_y)));
         Self {
             layers,
             position: (chunk_x, chunk_y),
-            visible_tiles: HashSet::new(),
-            revealed_tiles: HashSet::new(),
         }
     }
 
@@ -55,8 +124,7 @@ impl Chunk {
         let (local_x, local_y) = Self::convert_to_local_chunk_coordinates(global_x, global_y);
         self.layers
             .get(&layer)
-            .and_then(|tiles| tiles.get(local_y))
-            .and_then(|row| row.get(local_x))
+            .and_then(|layer| layer.tiles.get(local_y).and_then(|row| row.get(local_x)))
     }
 
     /// Calcule les coordonnées globales du coin supérieur gauche du chunk
@@ -93,70 +161,8 @@ impl Chunk {
 
 impl Drawable for Chunk {
     fn draw(&self, buffer: &mut Buffer, area: Rect, camera: &Camera) {
-        // Vérifier si la couche actuelle existe dans ce chunk
-        let current_layer = camera.visible_layer;
-        let Some(layer_tiles) = self.layers.get(&current_layer) else {
-            return;
-        };
-
-        // Calculer la position globale du coin supérieur gauche du chunk
-        let chunk_world_x = self.position.0 * CHUNK_SIZE as i32;
-        let chunk_world_y = self.position.1 * CHUNK_SIZE as i32;
-
-        // Parcourir toutes les tuiles du chunk
-        for (local_y, row) in layer_tiles.iter().enumerate() {
-            for (local_x, tile) in row.iter().enumerate() {
-                // Calculer les coordonnées globales de la tuile
-                let global_x = chunk_world_x + local_x as i32;
-                let global_y = chunk_world_y + local_y as i32;
-
-                // Vérifier la visibilité et la révélation
-                let is_visible = self.visible_tiles.contains(&(global_x, global_y));
-                let is_revealed = self.revealed_tiles.contains(&(global_x, global_y));
-
-                if !is_visible && !is_revealed {
-                    continue;
-                }
-
-                // Calculer la position relative à la caméra
-                let screen_x = global_x - camera.position.0;
-                let screen_y = global_y - camera.position.1;
-
-                // Vérifier si dans les limites de l'écran
-                if screen_x < 0
-                    || screen_x >= area.width as i32
-                    || screen_y < 0
-                    || screen_y >= area.height as i32
-                {
-                    continue;
-                }
-
-                // Déterminer le style
-                let style = if is_visible {
-                    tile.style
-                } else {
-                    // Appliquer la conversion en niveaux de gris
-                    let mut revealed_style = tile.style;
-                    if let Some(fg) = revealed_style.fg {
-                        revealed_style.fg = Some(Camera::style_to_greyscale(fg));
-                    }
-                    revealed_style
-                };
-
-                // Calculer la position dans le buffer
-                let buffer_x = area.x + screen_x as u16;
-                let buffer_y = area.y + screen_y as u16;
-
-                // Vérifier les limites du buffer
-                if buffer_x >= area.right() || buffer_y >= area.bottom() {
-                    continue;
-                }
-
-                // Mettre à jour la cellule du buffer
-                let cell = buffer.cell_mut((buffer_x, buffer_y)).unwrap();
-                cell.set_symbol(&tile.symbol);
-                cell.set_style(style);
-            }
+        if let Some(layer) = self.layers.get(&camera.visible_layer) {
+            layer.draw(buffer, area, camera);
         }
     }
 }
@@ -174,9 +180,35 @@ impl Map {
 
     /// generates one chunk at (x, y) in chunk coordinates with one layer of tiles at the current visible layer
     pub fn load_chunk(&mut self, chunk_x: i32, chunk_y: i32, layer: i32) {
-        self.chunks
+        // finds the chunk or generates it
+        let chunk = self
+            .chunks
             .entry((chunk_x, chunk_y))
             .or_insert_with(|| Chunk::new(chunk_x, chunk_y, layer));
+
+        // add a layer to the chunk if it doesn't exist yet
+        if !chunk.layers.contains_key(&layer) {
+            let world_x = chunk_x * CHUNK_SIZE as i32;
+            let world_y = chunk_y * CHUNK_SIZE as i32;
+            let tiles = (0..CHUNK_SIZE)
+                .map(|y| {
+                    (0..CHUNK_SIZE)
+                        .map(|x| {
+                            if x == 0 && y == 0 {
+                                Tile::new(TileKind::Wall)
+                            } else if x == 1 && y == 1 {
+                                Tile::new(TileKind::Water)
+                            } else {
+                                Tile::new(TileKind::Grass)
+                            }
+                        })
+                        .collect()
+                })
+                .collect();
+            chunk
+                .layers
+                .insert(layer, Layer::new(tiles, (world_x, world_y)));
+        }
     }
 
     /// generates chunks around the point

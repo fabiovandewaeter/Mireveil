@@ -166,14 +166,14 @@ impl App {
         }
     }
 
-    fn update(&self) {}
-
     fn update_camera_position(&mut self, area: Rect) {
         let player_pos = self.entity_manager.player.position;
         self.camera.position.0 = player_pos.0 - (area.width as i32 / 2);
         self.camera.position.1 = player_pos.1 - (area.height as i32 / 2);
         self.camera.visible_layer = player_pos.2;
     }
+
+    fn update(&self) {}
 
     fn draw(&self, frame: &mut Frame) {
         let area = frame.area();

@@ -1,9 +1,7 @@
 use crossterm::event::KeyCode;
 use ratatui::{buffer::Buffer, layout::Rect};
 
-use crate::{
-    common::utils::Drawable, entities::entity::Entity, map::map::Map, menu::Logger, systems::camera,
-};
+use crate::{common::utils::Drawable, entities::entity::Entity, map::map::Map, menu::Logger};
 
 use super::camera::Camera;
 

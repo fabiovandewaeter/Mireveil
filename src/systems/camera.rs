@@ -44,7 +44,9 @@ impl Camera {
 
         // reset visible tiles
         for chunk in map.chunks.values_mut() {
-            chunk.visible_tiles.clear();
+            for layer in chunk.layers.values_mut() {
+                layer.visible_tiles.clear();
+            }
         }
 
         // updates visible tiles
@@ -52,8 +54,10 @@ impl Camera {
             let chunk_coords = Map::convert_to_chunk_coordinates(global_x, global_y);
 
             if let Some(chunk) = map.chunks.get_mut(&chunk_coords) {
-                chunk.visible_tiles.insert((global_x, global_y));
-                chunk.revealed_tiles.insert((global_x, global_y));
+                if let Some(layer) = chunk.layers.get_mut(&self.visible_layer) {
+                    layer.visible_tiles.insert((global_x, global_y));
+                    layer.revealed_tiles.insert((global_x, global_y));
+                }
             }
         }
     }
