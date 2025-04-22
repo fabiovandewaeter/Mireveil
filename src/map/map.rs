@@ -127,7 +127,7 @@ impl Chunk {
             .and_then(|layer| layer.tiles.get(local_y).and_then(|row| row.get(local_x)))
     }
 
-    /// Calcule les coordonnées globales du coin supérieur gauche du chunk
+    /// returns global coordinates for left corner of the chunk
     pub fn get_chunk_world_position(&self) -> (i32, i32) {
         (
             self.position.0 * CHUNK_SIZE as i32,
@@ -135,6 +135,7 @@ impl Chunk {
         )
     }
 
+    /// returns true if the chunk is visible by the camera
     pub fn is_visible(&self, area: Rect, camera: &Camera) -> bool {
         let top_left_position = self.get_chunk_world_position();
         let dimensions = (CHUNK_SIZE as i32, CHUNK_SIZE as i32);
