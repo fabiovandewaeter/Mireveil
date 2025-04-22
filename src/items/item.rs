@@ -1,8 +1,6 @@
 use crate::entities::entity::Entity;
 
 pub trait Equipable {
-    fn equip(&self, entity: &mut Entity);
-    fn unequip(&self, entity: &mut Entity);
     /// returns the EquipmentSlot the Item can be equipped on
     fn get_slot(&self) -> EquipmentSlot;
 }
@@ -20,6 +18,7 @@ pub enum EquipmentSlot {
     Feet,
 }
 
+#[derive(Clone, Copy)]
 pub enum WeaponKind {
     Sword,
     Bow,
@@ -28,39 +27,45 @@ pub enum WeaponKind {
     Staff,
 }
 
+#[derive(Clone, Copy)]
 pub enum ArmorKind {
     Helmet,
     Chestplate,
     Boots,
 }
 
+#[derive(Clone, Copy)]
 pub enum ConsumableKind {
     Potion,
     Scroll,
     Food,
 }
 
+#[derive(Clone, Copy)]
 pub enum ConsumableEffect {
     Heal(u32),
 }
 
+#[derive(Clone, Copy)]
 pub struct WeaponData {
     kind: WeaponKind,
-    damage: u32,
-    attack_speed: f32,
+    pub strenght: u32,
 }
 
+#[derive(Clone, Copy)]
 pub struct ArmorData {
     kind: ArmorKind,
     defense: u32,
 }
 
+#[derive(Clone, Copy)]
 pub struct ConsumableData {
     kind: ConsumableKind,
     effect: ConsumableEffect,
     charges: u32,
 }
 
+#[derive(Clone, Copy)]
 pub enum ItemKind {
     Weapon(WeaponData),
     Armor(ArmorData),
@@ -70,7 +75,7 @@ pub enum ItemKind {
 pub struct Item {
     pub name: String,
     pub description: String,
-    kind: ItemKind,
+    pub kind: ItemKind,
 }
 
 impl Item {
@@ -82,21 +87,11 @@ impl Item {
         }
     }
 
-    pub fn new_weapon(
-        name: String,
-        description: String,
-        kind: WeaponKind,
-        damage: u32,
-        attack_speed: f32,
-    ) -> Self {
+    pub fn new_weapon(name: String, description: String, kind: WeaponKind, strenght: u32) -> Self {
         Self {
             name,
             description,
-            kind: ItemKind::Weapon(WeaponData {
-                kind,
-                damage,
-                attack_speed,
-            }),
+            kind: ItemKind::Weapon(WeaponData { kind, strenght }),
         }
     }
 

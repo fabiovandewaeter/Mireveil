@@ -10,7 +10,7 @@ use ratatui::{
 use crate::{
     common::utils::Drawable,
     entities::action::Attack,
-    items::item::{EquipmentSlot, Item},
+    items::item::{EquipmentSlot, Item, ItemKind, WeaponData},
     map::map::{CHUNK_SIZE, Map},
     menu::Logger,
     systems::{
@@ -243,7 +243,7 @@ pub struct Entity {
     xp_drop: u32,
     level_manager: LevelManager,
     actions: Vec<Box<dyn Action>>,
-    equipment: HashMap<EquipmentSlot, Item>,
+    pub equipment: HashMap<EquipmentSlot, Item>,
     inventory: Inventory,
 }
 
@@ -254,15 +254,6 @@ impl Entity {
         position: (i32, i32),
         controller: Controller,
     ) -> Self {
-        /*let mut items_example = HashMap::new();
-        items_example.insert(EquipmentSlot::MainHand, Item::Weapon(Sword { damage: 10 }));
-        items_example.insert(EquipmentSlot::Head, Item::Armor(Helmet { defense: 10 }));
-        items_example.insert(
-            EquipmentSlot::Chest,
-            Item::Armor(Chestplate { defense: 10 }),
-        );
-        items_example.insert(EquipmentSlot::Legs, Item::Armor(Leggings { defense: 10 }));
-        items_example.insert(EquipmentSlot::Feet, Item::Armor(Boots { defense: 10 }));*/
         Self {
             name,
             position,
@@ -286,12 +277,20 @@ impl Entity {
     }
 
     pub fn player(position: (i32, i32)) -> Self {
-        Self::new(
+        let god_sword = Item::new_weapon(
+            "GodSword".to_string(),
+            "GodSword to test items".to_string(),
+            crate::items::item::WeaponKind::Sword,
+            1000,
+        );
+        let mut player = Self::new(
             EntityKind::Human,
             "Player".to_string(),
             position,
             Controller::Player,
-        )
+        );
+        player.equip_item(god_sword);
+        player
     }
 
     pub fn update<'a, I>(
@@ -324,6 +323,17 @@ impl Entity {
             }
 
             self.equipment.insert(slot, item);
+        }
+    }
+
+    pub fn get_weapon_datas(&self) -> Option<WeaponData> {
+        if let Some(weapon) = self.equipment.get(&EquipmentSlot::Hand) {
+            match &weapon.kind {
+                ItemKind::Weapon(weapon_data) => Some(*weapon_data),
+                _ => None,
+            }
+        } else {
+            None
         }
     }
 }
