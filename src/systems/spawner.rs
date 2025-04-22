@@ -91,7 +91,12 @@ impl Spawner {
             && !map.get_tile(spawn_x, spawn_y).unwrap().solid
         {
             self.last_spawn = now;
-            let new_entity = Entity::new(chosen_kind, (spawn_x, spawn_y), Controller::AI);
+            let new_entity = Entity::new(
+                chosen_kind,
+                chosen_kind.name().to_owned(),
+                (spawn_x, spawn_y),
+                Controller::AI,
+            );
             // only spawns the entity if there is not too many entities on the map
             if entity_manager.count_living_entities() < self.config.max_entities as u32 {
                 entity_manager.add_entity(new_entity);

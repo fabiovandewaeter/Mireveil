@@ -10,7 +10,7 @@ use ratatui::{
 use crate::{
     common::utils::Drawable,
     entities::action::Attack,
-    items::item::{Boots, Equipable, EquipmentSlot, Helmet, Leggings, Sword},
+    items::item::{EquipmentSlot, Item},
     map::map::{CHUNK_SIZE, Map},
     menu::Logger,
     systems::{
@@ -29,6 +29,13 @@ pub enum EntityKind {
 }
 
 impl EntityKind {
+    pub fn name(&self) -> &'static str {
+        match self {
+            EntityKind::Human => "Human",
+            EntityKind::Dragon => "Dragon",
+            EntityKind::Sheep => "Sheep",
+        }
+    }
     fn symbol(&self) -> &'static str {
         match self {
             EntityKind::Human => "@",
@@ -214,23 +221,39 @@ pub struct EntityStats {
 }
 
 struct Inventory {
-    //max_weight: f32,
+    items: Vec<Item>,
+}
+
+impl Inventory {
+    fn new() -> Self {
+        Self { items: Vec::new() }
+    }
+
+    fn add(&mut self, item: Item) {
+        self.items.push(item);
+    }
 }
 
 pub struct Entity {
     kind: EntityKind,
+    pub name: String,
     pub position: (i32, i32),
     controller: Controller,
     pub stats: EntityStats,
     xp_drop: u32,
     level_manager: LevelManager,
     actions: Vec<Box<dyn Action>>,
-    //equipment: HashMap<EquipmentSlot, Box<dyn Equipable>>,
-    //inventory: Inventory,
+    equipment: HashMap<EquipmentSlot, Item>,
+    inventory: Inventory,
 }
 
 impl Entity {
-    pub fn new(kind: EntityKind, position: (i32, i32), controller: Controller) -> Self {
+    pub fn new(
+        kind: EntityKind,
+        name: String,
+        position: (i32, i32),
+        controller: Controller,
+    ) -> Self {
         /*let mut items_example = HashMap::new();
         items_example.insert(EquipmentSlot::MainHand, Item::Weapon(Sword { damage: 10 }));
         items_example.insert(EquipmentSlot::Head, Item::Armor(Helmet { defense: 10 }));
@@ -241,6 +264,7 @@ impl Entity {
         items_example.insert(EquipmentSlot::Legs, Item::Armor(Leggings { defense: 10 }));
         items_example.insert(EquipmentSlot::Feet, Item::Armor(Boots { defense: 10 }));*/
         Self {
+            name,
             position,
             controller,
             stats: kind.stats(),
@@ -248,8 +272,8 @@ impl Entity {
             level_manager: LevelManager::default(),
             actions: kind.actions(),
             kind,
-            //equipment: items_example,
-            //inventory: Inventory::new(),
+            equipment: HashMap::new(),
+            inventory: Inventory::new(),
         }
     }
 
@@ -262,7 +286,12 @@ impl Entity {
     }
 
     pub fn player(position: (i32, i32)) -> Self {
-        Self::new(EntityKind::Human, position, Controller::Player)
+        Self::new(
+            EntityKind::Human,
+            "Player".to_string(),
+            position,
+            Controller::Player,
+        )
     }
 
     pub fn update<'a, I>(
@@ -288,18 +317,15 @@ impl Entity {
         self.stats.hp == 0
     }
 
-    /*fn equip_item(&mut self, item: Box<dyn Equipable>) {
-        let slot = item.get_slot();
-        if let Some(prev) = self.equipment.remove(&slot) {
-            self.add_inventory(prev);
+    fn equip_item(&mut self, item: Item) {
+        if let Some(slot) = item.get_equipment_slot() {
+            if let Some(prev) = self.equipment.remove(&slot) {
+                self.inventory.add(prev);
+            }
+
+            self.equipment.insert(slot, item);
         }
-
-        self.equipment.insert(slot, item);
     }
-
-    fn add_inventory(&mut self, item: &Item){
-        self.inventory.
-    }*/
 }
 
 impl Drawable for Entity {
