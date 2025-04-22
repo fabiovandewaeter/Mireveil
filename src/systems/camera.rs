@@ -42,7 +42,7 @@ pub fn in_line_of_sight(start: (i32, i32), target: (i32, i32), map: &Map) -> boo
         if (x, y) == target {
             return true;
         }
-        if let Some(tile) = map.get_tile(x, y) {
+        if let Some(tile) = map.get_tile(x, y, map.visible_layer) {
             if tile.block_sight {
                 return false;
             }

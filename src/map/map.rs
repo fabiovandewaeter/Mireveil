@@ -71,7 +71,7 @@ impl Chunk {
 
 pub struct Map {
     pub chunks: HashMap<(i32, i32), Chunk>,
-    visible_layer: i32,
+    pub visible_layer: i32,
     /// coordinates of tiles that will be drawn
     pub visible_tiles: HashSet<(i32, i32)>,
     /// coordinates of tiles that were seen and will be drawn in black and white

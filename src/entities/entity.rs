@@ -180,7 +180,7 @@ impl Controller {
                 Self::handle_xp_gain(entity, target, logger);
             }
         }
-        if let Some(tile) = map.get_tile(new_x, new_y) {
+        if let Some(tile) = map.get_tile(new_x, new_y, map.visible_layer) {
             if !tile.solid {
                 entity.position = (new_x, new_y);
                 map.load_around((

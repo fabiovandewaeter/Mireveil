@@ -137,7 +137,9 @@ impl App {
                         self.menu.selected_tile_info = None;
                     }
                     // otherwise gets the tile
-                    else if let Some(tile) = self.map.get_tile(world_x, world_y) {
+                    else if let Some(tile) =
+                        self.map.get_tile(world_x, world_y, self.map.visible_layer)
+                    {
                         self.menu.selected_tile_info = Some(String::from(tile.symbol));
                         self.menu.selected_entity_info = None;
                     } else {

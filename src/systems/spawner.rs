@@ -88,7 +88,10 @@ impl Spawner {
         let spawn_y = base_y + offset_y;
 
         if entity_manager.find_entity_at(spawn_x, spawn_y).is_none()
-            && !map.get_tile(spawn_x, spawn_y).unwrap().solid
+            && !map
+                .get_tile(spawn_x, spawn_y, map.visible_layer)
+                .unwrap()
+                .solid
         {
             self.last_spawn = now;
             let new_entity = Entity::new(
