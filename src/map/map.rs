@@ -1,18 +1,8 @@
-use std::{
-    collections::{HashMap, HashSet},
-    hash::Hash,
-};
+use std::collections::{HashMap, HashSet};
 
-use ratatui::{
-    buffer::Buffer,
-    layout::{self, Position, Rect},
-    style::{Color, Style},
-};
+use ratatui::{buffer::Buffer, layout::Rect};
 
-use crate::{
-    common::utils::Drawable,
-    systems::camera::{self, Camera},
-};
+use crate::{common::utils::Drawable, systems::camera::Camera};
 
 use super::tile::{Tile, TileKind};
 
