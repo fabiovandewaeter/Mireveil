@@ -135,12 +135,15 @@ impl Controller {
     ) where
         I: Iterator<Item = &'a mut Entity>,
     {
-        let (dx, dy) = match key_code {
-            KeyCode::Up => (0, -1),
-            KeyCode::Down => (0, 1),
-            KeyCode::Left => (-1, 0),
-            KeyCode::Right => (1, 0),
-            _ => (0, 0),
+        let (mut dx, mut dy) = (0, 0);
+        match key_code {
+            KeyCode::Up => (dx, dy) = (0, -1),
+            KeyCode::Down => (dx, dy) = (0, 1),
+            KeyCode::Left => (dx, dy) = (-1, 0),
+            KeyCode::Right => (dx, dy) = (1, 0),
+            KeyCode::Char('y') => entity.position.2 += 1,
+            KeyCode::Char('u') => entity.position.2 -= 1,
+            _ => {}
         };
 
         let new_x = entity.position.0 + dx;

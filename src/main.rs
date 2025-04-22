@@ -15,16 +15,33 @@ mod map;
 mod menu;
 mod systems;
 
+/// disable mouse capture even if app crash
+struct MouseGuard;
+
+impl MouseGuard {
+    fn new() -> Result<Self> {
+        execute!(stdout(), EnableMouseCapture)?;
+        Ok(Self)
+    }
+}
+
+impl Drop for MouseGuard {
+    fn drop(&mut self) {
+        if let Err(e) = execute!(stdout(), DisableMouseCapture) {
+            eprintln!("Failed to disable mouse capture: {}", e);
+        }
+    }
+}
+
 fn main() -> Result<()> {
     color_eyre::install()?;
+
     let terminal = ratatui::init();
-    execute!(stdout(), EnableMouseCapture)?;
+    let _mouse_guard = MouseGuard::new()?;
     let config = Config::default();
     let app = App::new(config);
     let app_result = app.run(terminal);
+
     ratatui::restore();
-    if let Err(err) = execute!(stdout(), DisableMouseCapture) {
-        eprintln!("Error disabling mouse capture: {err}");
-    }
     app_result
 }
