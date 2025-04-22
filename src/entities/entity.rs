@@ -213,6 +213,10 @@ pub struct EntityStats {
     pub magic: u32,
 }
 
+struct Inventory {
+    //max_weight: f32,
+}
+
 pub struct Entity {
     kind: EntityKind,
     pub position: (i32, i32),
@@ -222,6 +226,7 @@ pub struct Entity {
     level_manager: LevelManager,
     actions: Vec<Box<dyn Action>>,
     //equipment: HashMap<EquipmentSlot, Box<dyn Equipable>>,
+    //inventory: Inventory,
 }
 
 impl Entity {
@@ -244,6 +249,7 @@ impl Entity {
             actions: kind.actions(),
             kind,
             //equipment: items_example,
+            //inventory: Inventory::new(),
         }
     }
 
@@ -301,12 +307,7 @@ impl Drawable for Entity {
         let screen_x = self.position.0 - camera_position.0;
         let screen_y = self.position.1 - camera_position.1;
 
-        // only draw if the Entity is close enough to the camera
-        /*if screen_x >= 0
-        && screen_x < area.width as i32
-        && screen_y >= 0
-        && screen_y < area.height as i32
-        */
+        // only draws if the Entity is close enough to the camera
         if visible_on_screen(&self, area, camera_position) {
             let position: Position = Position {
                 x: screen_x as u16,
@@ -316,7 +317,7 @@ impl Drawable for Entity {
             let mut style = self.style();
             let mut symbol = self.symbol();
 
-            // change the style and symbol if the entity is dead
+            // changes the style and symbol if the entity is dead
             if self.is_dead() {
                 style = style.fg(style_to_greyscale(style.fg.unwrap_or(Color::Gray)));
                 symbol = "†";
