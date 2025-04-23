@@ -20,27 +20,7 @@ impl Camera {
         }
     }
 
-    fn compute_fov(
-        &self,
-        player_position: (i32, i32, i32),
-        range: i32,
-        map: &Map,
-    ) -> HashSet<(i32, i32)> {
-        let mut visible = HashSet::new();
-        for y in (player_position.1 - range)..=(player_position.1 + range) {
-            for x in (player_position.0 - range)..=(player_position.0 + range) {
-                let dx = x - player_position.0;
-                let dy = y - player_position.1;
-                if dx * dx + dy * dy <= range * range {
-                    if self.in_line_of_sight(player_position, (x, y), map) {
-                        visible.insert((x, y));
-                    }
-                }
-            }
-        }
-        visible
-    }
-
+    /// updates the visible_tiles of the map based on the player position
     pub fn update_visibility(&self, player_position: (i32, i32, i32), range: i32, map: &mut Map) {
         // computes FOV for player
         let visible = self.compute_fov(player_position, range, map);
@@ -65,6 +45,28 @@ impl Camera {
         }
     }
 
+    /// private method to update visibility; returns the set of coordinates of the tiles visible to the player
+    fn compute_fov(
+        &self,
+        player_position: (i32, i32, i32),
+        range: i32,
+        map: &Map,
+    ) -> HashSet<(i32, i32)> {
+        let mut visible = HashSet::new();
+        for y in (player_position.1 - range)..=(player_position.1 + range) {
+            for x in (player_position.0 - range)..=(player_position.0 + range) {
+                let dx = x - player_position.0;
+                let dy = y - player_position.1;
+                if dx * dx + dy * dy <= range * range {
+                    if self.in_line_of_sight(player_position, (x, y), map) {
+                        visible.insert((x, y));
+                    }
+                }
+            }
+        }
+        visible
+    }
+
     /// returns a grayed-out version of the RGB color
     pub fn style_to_greyscale(color: Color) -> Color {
         match color {
@@ -76,7 +78,7 @@ impl Camera {
         }
     }
 
-    /// Style a tile depending on visibility
+    /// styles a tile depending on visibility
     pub fn grays_tile_if_not_visible(&self, tile: &Tile, is_visible: bool) -> Style {
         if is_visible {
             tile.style
@@ -89,6 +91,7 @@ impl Camera {
         }
     }
 
+    /// retuns the camera coordinates so that the center is pointed at the player
     pub fn get_center(&self, player_position: (i32, i32), area: Rect) -> (i32, i32) {
         (
             player_position.0 - (area.width as i32 / 2),
@@ -96,7 +99,7 @@ impl Camera {
         )
     }
 
-    /// Convert a world position to buffer coordinates if on-screen
+    /// converts a world position to buffer coordinates if on-screen
     pub fn world_to_screen(&self, global: (i32, i32), area: Rect) -> Option<(u16, u16)> {
         let screen_x = global.0 - self.position.0;
         let screen_y = global.1 - self.position.1;
@@ -123,18 +126,18 @@ impl Camera {
         dimensions: (i32, i32),
         area: Rect,
     ) -> bool {
-        // Rectangle bounds in world coordinates
+        // rectangle bounds in world coordinates
         let (left, top) = (top_left_coordinates.0, top_left_coordinates.1);
         let right = left + dimensions.0;
         let bottom = top + dimensions.1;
 
-        // Screen bounds in world coordinates
+        // screen bounds in world coordinates
         let screen_left = self.position.0;
         let screen_top = self.position.1;
         let screen_right = self.position.0 + area.width as i32;
         let screen_bottom = self.position.1 + area.height as i32;
 
-        // Check for overlap between the two rectangles
+        // check for overlap between the two rectangles
         !(right <= screen_left
             || left >= screen_right
             || bottom <= screen_top
