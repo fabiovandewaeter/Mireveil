@@ -32,15 +32,18 @@ impl EntityManager {
         map: &mut Map,
         logger: &mut Logger,
     ) {
+        let mut other_entities = self.entities.iter_mut().collect::<Vec<_>>();
         self.player
-            .update(Some(key_code), map, self.entities.iter_mut(), logger);
+            .update(Some(key_code), map, other_entities.as_mut_slice(), logger);
         camera.update_visibility(self.player.position, 50, map);
+
         let size = self.entities.len();
         for i in 0..size {
             let (left, right) = self.entities.split_at_mut(i);
             let (current, right) = right.split_first_mut().unwrap();
-            let other_entities = left.iter_mut().chain(right.iter_mut());
-            current.update(None, map, other_entities, logger);
+            let mut other_entities: Vec<&mut Entity> =
+                left.iter_mut().chain(right.iter_mut()).collect();
+            current.update(None, map, other_entities.as_mut_slice(), logger);
         }
 
         self.handle_dead_entities();

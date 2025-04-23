@@ -102,16 +102,14 @@ pub enum Controller {
 }
 
 impl Controller {
-    pub fn update_entity<'a, I>(
+    pub fn update_entity(
         &self,
         entity: &mut Entity,
         input: Option<KeyCode>,
         map: &mut Map,
-        other_entities: I,
+        other_entities: &mut [&mut Entity],
         logger: &mut Logger,
-    ) where
-        I: Iterator<Item = &'a mut Entity>,
-    {
+    ) {
         match self {
             Controller::Player => {
                 if let Some(key_code) = input {
@@ -122,16 +120,14 @@ impl Controller {
         }
     }
 
-    fn handle_player_input<'a, I>(
+    fn handle_player_input(
         &self,
         entity: &mut Entity,
         key_code: KeyCode,
         map: &mut Map,
-        other_entities: I,
+        other_entities: &mut [&mut Entity],
         logger: &mut Logger,
-    ) where
-        I: Iterator<Item = &'a mut Entity>,
-    {
+    ) {
         let (dx, dy, dz) = match key_code {
             KeyCode::Up => (0, -1, 0),
             KeyCode::Down => (0, 1, 0),
@@ -149,19 +145,20 @@ impl Controller {
         self.handle_entity_movement(entity, new_x, new_y, new_z, map, other_entities, logger);
     }
 
-    fn handle_entity_movement<'a, I>(
+    fn handle_entity_movement(
         &self,
         entity: &mut Entity,
         new_x: i32,
         new_y: i32,
         new_z: i32,
         map: &mut Map,
-        mut other_entities: I,
+        other_entities: &mut [&mut Entity],
         logger: &mut Logger,
-    ) where
-        I: Iterator<Item = &'a mut Entity>,
-    {
-        if let Some(target) = other_entities.find(|e| e.position == (new_x, new_y, new_z)) {
+    ) {
+        if let Some(target) = other_entities
+            .iter_mut()
+            .find(|e| e.position == (new_x, new_y, new_z))
+        {
             let target_was_alive = !target.is_dead();
             // attacks the entity
             for action in &entity.actions {
@@ -292,15 +289,13 @@ impl Entity {
         player
     }
 
-    pub fn update<'a, I>(
+    pub fn update(
         &mut self,
         input: Option<KeyCode>,
         map: &mut Map,
-        other_entities: I,
+        other_entities: &mut [&mut Entity],
         logger: &mut Logger,
-    ) where
-        I: Iterator<Item = &'a mut Entity>,
-    {
+    ) {
         let controller = self.controller;
         controller.update_entity(self, input, map, other_entities, logger);
     }
