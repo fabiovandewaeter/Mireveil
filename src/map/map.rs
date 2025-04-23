@@ -33,7 +33,7 @@ impl Layer {
 }
 
 impl Drawable for Layer {
-    fn draw(&self, buffer: &mut Buffer, area: Rect, camera: &Camera) {
+    fn draw(&self, buffer: &mut Buffer, area: Rect, camera: &Camera, map: &Map) {
         let (chunk_world_x, chunk_world_y) = self.position;
 
         // merge visible and revealed sets
@@ -138,9 +138,9 @@ impl Chunk {
 }
 
 impl Drawable for Chunk {
-    fn draw(&self, buffer: &mut Buffer, area: Rect, camera: &Camera) {
+    fn draw(&self, buffer: &mut Buffer, area: Rect, camera: &Camera, map: &Map) {
         if let Some(layer) = self.layers.get(&camera.visible_layer) {
-            layer.draw(buffer, area, camera);
+            layer.draw(buffer, area, camera, map);
         }
     }
 }
@@ -214,6 +214,7 @@ impl Map {
             .collect()
     }
 
+    /// converts global coordinates to chunk coordinates
     pub fn convert_to_chunk_coordinates(global_x: i32, global_y: i32) -> (i32, i32) {
         (
             global_x.div_euclid(CHUNK_SIZE as i32),
@@ -237,10 +238,10 @@ impl Default for Map {
 
 impl Drawable for Map {
     /// draws the tiles of the map only for the visible layer
-    fn draw(&self, buffer: &mut Buffer, area: Rect, camera: &Camera) {
+    fn draw(&self, buffer: &mut Buffer, area: Rect, camera: &Camera, map: &Map) {
         let visibile_chunks = self.get_visible_chunks(area, camera);
         for chunk in visibile_chunks {
-            chunk.draw(buffer, area, camera);
+            chunk.draw(buffer, area, camera, map);
         }
     }
 }

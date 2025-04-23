@@ -92,13 +92,13 @@ impl EntityManager {
 }
 
 impl Drawable for EntityManager {
-    fn draw(&self, buffer: &mut Buffer, area: Rect, camera: &Camera) {
+    fn draw(&self, buffer: &mut Buffer, area: Rect, camera: &Camera, map: &Map) {
         for entity in self.entities.iter() {
-            entity.draw(buffer, area, camera);
+            entity.draw(buffer, area, camera, map);
         }
         for dead_entity in self.dead_entities.iter() {
-            dead_entity.draw(buffer, area, &camera);
+            dead_entity.draw(buffer, area, camera, map);
         }
-        self.player.draw(buffer, area, &camera);
+        self.player.draw(buffer, area, camera, map);
     }
 }

@@ -188,10 +188,11 @@ impl App {
         let buffer = frame.buffer_mut();
 
         // draws map
-        self.map.draw(buffer, area, &self.camera);
+        self.map.draw(buffer, area, &self.camera, &self.map);
 
         // draws entities
-        self.entity_manager.draw(buffer, area, &self.camera);
+        self.entity_manager
+            .draw(buffer, area, &self.camera, &self.map);
 
         // draws menu
         if self.menu.visible {

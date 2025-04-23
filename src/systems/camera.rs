@@ -144,6 +144,21 @@ impl Camera {
             || top >= screen_bottom)
     }
 
+    pub fn is_visible_tile(&self, position: (i32, i32, i32), map: &Map) -> bool {
+        let (x, y, z) = position;
+        let chunk_coordinates = Map::convert_to_chunk_coordinates(x, y);
+        if z == self.visible_layer {
+            if let Some(chunk) = map.chunks.get(&chunk_coordinates) {
+                if let Some(layer) = chunk.layers.get(&z) {
+                    if layer.visible_tiles.contains(&(x, y)) {
+                        return true;
+                    }
+                }
+            }
+        }
+        false
+    }
+
     /// create a line between (x0, y0) and (x1, y1)
     fn bresenham_line(x0: i32, y0: i32, x1: i32, y1: i32) -> Vec<(i32, i32)> {
         let mut points = Vec::new();
