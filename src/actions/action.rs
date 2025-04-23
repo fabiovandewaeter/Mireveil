@@ -19,7 +19,7 @@ impl Action for Attack {
     fn affect(&self, source: &Entity, target: &mut Entity, logger: &mut Logger) {
         let target_was_alive = !target.is_dead();
         let mut damage = self.damage + source.stats.strength;
-        if let Some(weapon_datas) = source.get_weapon_datas() {
+        if let Some(weapon_datas) = source.get_weapon_data() {
             damage += weapon_datas.strenght;
         }
         let actual_damage = target.take_damage(damage);

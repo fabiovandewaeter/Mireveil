@@ -325,7 +325,7 @@ impl Entity {
         }
     }
 
-    pub fn get_weapon_datas(&self) -> Option<WeaponData> {
+    pub fn get_weapon_data(&self) -> Option<WeaponData> {
         if let Some(weapon) = self.equipment.get(&EquipmentSlot::Hand) {
             match &weapon.kind {
                 ItemKind::Weapon(weapon_data) => Some(*weapon_data),
