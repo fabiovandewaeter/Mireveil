@@ -7,6 +7,7 @@ use crossterm::{
     execute,
 };
 
+mod actions;
 mod app;
 mod common;
 mod entities;

@@ -8,15 +8,13 @@ use ratatui::{
 };
 
 use crate::{
+    actions::action::{Action, Attack},
     common::utils::Drawable,
-    entities::action::Attack,
     items::item::{EquipmentSlot, Item, ItemKind, WeaponData},
     map::map::{CHUNK_SIZE, Map},
     menu::Logger,
     systems::{camera::Camera, level_manager::LevelManager},
 };
-
-use super::action::Action;
 
 #[derive(Clone, Copy)]
 pub enum EntityKind {
@@ -167,9 +165,7 @@ impl Controller {
             let target_was_alive = !target.is_dead();
             // attacks the entity
             for action in &entity.actions {
-                if let Some(msg) = action.affect(entity, target) {
-                    logger.push_message(msg);
-                }
+                action.affect(entity, target, logger);
             }
             // if the target is now dead
             if target_was_alive && target.is_dead() {
