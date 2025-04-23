@@ -31,6 +31,7 @@ pub enum WeaponKind {
 pub enum ArmorKind {
     Helmet,
     Chestplate,
+    Leggings,
     Boots,
 }
 
@@ -127,6 +128,7 @@ impl Item {
             ItemKind::Armor(armor_data) => match armor_data.kind {
                 ArmorKind::Helmet => Some(EquipmentSlot::Head),
                 ArmorKind::Chestplate => Some(EquipmentSlot::Chest),
+                ArmorKind::Leggings => Some(EquipmentSlot::Legs),
                 ArmorKind::Boots => Some(EquipmentSlot::Feet),
             },
             ItemKind::Consumable(_) => None,

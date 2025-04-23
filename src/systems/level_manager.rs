@@ -1,12 +1,12 @@
 use crate::entities::entity::EntityStats;
 
 pub trait XPCurve {
-    // returns the xp needed to reach that level
+    /// returns the xp needed to reach that level
     fn xp_required(&self, level: u32) -> u32;
 }
 
 struct ExponentialCurve {
-    // base xp required
+    /// base xp required
     base: u32,
     exponent: f32,
 }
@@ -30,6 +30,7 @@ impl XPCurve for ExponentialCurve {
     }
 }
 
+/// responsible for counting levels, XP and leveling up
 pub struct LevelManager {
     pub level: u32,
     current_xp: u32,
@@ -45,6 +46,7 @@ impl LevelManager {
         }
     }
 
+    /// add xp to the entity and handle the level ups
     pub fn add_xp(&mut self, xp: u32, entity_stats: &mut EntityStats) -> u32 {
         let initial_level = self.level;
 
@@ -56,12 +58,12 @@ impl LevelManager {
         self.level - initial_level
     }
 
-    // returns the required xp for next lvl
+    /// returns the required xp for next lvl
     pub fn xp_to_next_level(&self) -> u32 {
         self.xp_curve.xp_required(self.level + 1)
     }
 
-    // add stats and increase level of the entity
+    /// add stats and increase level of the entity
     fn handle_level_up(&mut self, entity_stats: &mut EntityStats) {
         self.current_xp -= self.xp_curve.xp_required(self.level + 1);
         self.level += 1;
