@@ -34,7 +34,7 @@ impl Camera {
         for (global_x, global_y) in visible {
             let chunk_coords = Map::convert_to_chunk_coordinates(global_x, global_y);
             if let Some(chunk) = map.chunks.get_mut(&chunk_coords) {
-                if let Some(layer) = chunk.layers.get_mut(&self.position.2) {
+                if let Some(layer) = chunk.layers.get_mut(&player_position.2) {
                     layer.visible_tiles.insert((global_x, global_y));
                     layer.revealed_tiles.insert((global_x, global_y));
                 }
