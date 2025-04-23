@@ -189,7 +189,7 @@ impl Camera {
     /// compute all line of sight to finds tiles that are visible by the player
     pub fn in_line_of_sight(&self, start: (i32, i32, i32), target: (i32, i32), map: &Map) -> bool {
         let line = Self::bresenham_line(start.0, start.1, target.0, target.1);
-        for (i, &(x, y)) in line.iter().enumerate().skip(1) {
+        for (_i, &(x, y)) in line.iter().enumerate().skip(1) {
             // if it's the target it means its visible
             if (x, y) == target {
                 return true;

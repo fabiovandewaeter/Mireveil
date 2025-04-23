@@ -1,6 +1,6 @@
-use crate::entities::entity::{Entity, EntityStats};
+use crate::entities::entity::EntityStats;
 
-trait XPCurve {
+pub trait XPCurve {
     // returns the xp needed to reach that level
     fn xp_required(&self, level: u32) -> u32;
 }
@@ -19,10 +19,7 @@ impl ExponentialCurve {
 
 impl Default for ExponentialCurve {
     fn default() -> Self {
-        Self {
-            base: 2,
-            exponent: 1.5,
-        }
+        Self::new(2, 1.5)
     }
 }
 
@@ -40,10 +37,10 @@ pub struct LevelManager {
 }
 
 impl LevelManager {
-    pub fn new(initial_level: u32, xp_curve: Box<dyn XPCurve>) -> Self {
+    pub fn new(initial_level: u32, current_xp: u32, xp_curve: Box<dyn XPCurve>) -> Self {
         Self {
             level: initial_level,
-            current_xp: 0,
+            current_xp,
             xp_curve,
         }
     }
@@ -53,7 +50,7 @@ impl LevelManager {
 
         self.current_xp += xp;
         // checks if there are any level ups
-        while (self.current_xp >= self.xp_curve.xp_required(self.level + 1)) {
+        while self.current_xp >= self.xp_curve.xp_required(self.level + 1) {
             self.handle_level_up(entity_stats);
         }
         self.level - initial_level
@@ -87,10 +84,6 @@ impl LevelManager {
 
 impl Default for LevelManager {
     fn default() -> Self {
-        Self {
-            level: 1,
-            current_xp: 0,
-            xp_curve: Box::new(ExponentialCurve::default()),
-        }
+        Self::new(1, 0, Box::new(ExponentialCurve::default()))
     }
 }

@@ -33,7 +33,7 @@ impl Layer {
 }
 
 impl Drawable for Layer {
-    fn draw(&self, buffer: &mut Buffer, area: Rect, camera: &Camera, map: &Map) {
+    fn draw(&self, buffer: &mut Buffer, area: Rect, camera: &Camera, _map: &Map) {
         let (chunk_world_x, chunk_world_y) = self.position;
 
         // merge visible and revealed sets

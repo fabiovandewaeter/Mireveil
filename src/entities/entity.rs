@@ -78,7 +78,6 @@ impl EntityKind {
                 strength: 1,
                 magic: 0,
             },
-            _ => EntityStats::default(),
         }
     }
 

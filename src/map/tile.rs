@@ -11,7 +11,6 @@ impl TileKind {
     pub fn symbol(&self) -> &'static str {
         match self {
             TileKind::Wall => "#",
-            //TileKind::Grass => "·",
             TileKind::Grass => ",",
             TileKind::Water => "~",
         }
