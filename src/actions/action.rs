@@ -154,17 +154,12 @@ impl Action for AreaAttack {
         other_entities: &mut [&mut Entity],
         logger: &mut Logger,
     ) {
-        // Obtenir toutes les positions affectées par l'attaque de zone
         let area = self.get_area_of_effect(source.position, target_coordinates, &Map::default());
-
-        // Garder la trace des entités tuées
         let mut killed_count = 0;
         let mut affected_count = 0;
-
-        // Calculer les dégâts une seule fois
         let damage = self.calculate_damage(source);
 
-        // Appliquer les dégâts à toutes les entités dans la zone
+        // attacks all entities in the area
         for target in other_entities.iter_mut() {
             if area.contains(&target.position) {
                 let target_was_alive = !target.is_dead();
@@ -175,22 +170,23 @@ impl Action for AreaAttack {
                     killed_count += 1;
                 }
 
-                // Option: log individuel pour chaque cible
-                // logger.push_message(format!(
-                //     "{} frappe {} avec {} (-{} PV){}",
-                //     source.symbol(),
-                //     target.symbol(),
-                //     self.name,
-                //     actual_damage,
-                //     if target_was_alive && target.is_dead() { " et le tue" } else { "" }
-                // ));
+                logger.push_message(format!(
+                    "{} attacks {} (-{} PV){}",
+                    source.symbol(),
+                    target.symbol(),
+                    actual_damage,
+                    if target_was_alive && target.is_dead() {
+                        " and it died"
+                    } else {
+                        ""
+                    }
+                ));
             }
         }
 
-        // Message de log global pour l'attaque de zone
         if affected_count > 0 {
             logger.push_message(format!(
-                "{} lance {} et touche {} entité{} (-{} PV){}",
+                "{} attacks {} and hits {} entity{} (-{} PV){}",
                 source.symbol(),
                 self.name,
                 affected_count,
@@ -198,7 +194,7 @@ impl Action for AreaAttack {
                 damage,
                 if killed_count > 0 {
                     format!(
-                        ", {} entité{} tuée{}",
+                        ", {} entity{} dead{}",
                         killed_count,
                         if killed_count > 1 { "s" } else { "" },
                         if killed_count > 1 { "s" } else { "" }
@@ -209,7 +205,7 @@ impl Action for AreaAttack {
             ));
         } else {
             logger.push_message(format!(
-                "{} lance {} mais ne touche aucune cible",
+                "{} attacks {} but does not reach any entities",
                 source.symbol(),
                 self.name
             ));

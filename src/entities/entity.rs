@@ -85,7 +85,7 @@ impl EntityKind {
                 vec![
                     Box::new(MeleeAttack::new("melee human", 10, ActionType::Physical)),
                     Box::new(AreaAttack::new(
-                        "melee human",
+                        "area human",
                         10,
                         100,
                         100,

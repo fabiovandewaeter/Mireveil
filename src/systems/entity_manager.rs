@@ -57,7 +57,7 @@ impl EntityManager {
                 dead_entity_indices.push(i);
             }
         }
-        for i in dead_entity_indices {
+        for &i in dead_entity_indices.iter().rev() {
             let dead_entity = self.entities.remove(i);
             self.dead_entities.push(dead_entity);
         }
