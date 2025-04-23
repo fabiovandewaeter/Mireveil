@@ -36,47 +36,24 @@ impl Drawable for Layer {
     fn draw(&self, buffer: &mut Buffer, area: Rect, camera: &Camera) {
         let (chunk_world_x, chunk_world_y) = self.position;
 
-        for (local_y, row) in self.tiles.iter().enumerate() {
-            for (local_x, tile) in row.iter().enumerate() {
-                let global_x = chunk_world_x + local_x as i32;
-                let global_y = chunk_world_y + local_y as i32;
+        // merge visible and revealed sets
+        let all_tiles = self.visible_tiles.union(&self.revealed_tiles);
 
+        for &(global_x, global_y) in all_tiles {
+            // compute local indices
+            let local_x = (global_x - chunk_world_x) as usize;
+            let local_y = (global_y - chunk_world_y) as usize;
+            if local_x >= CHUNK_SIZE.into() || local_y >= CHUNK_SIZE.into() {
+                continue;
+            }
+
+            // project to screen coordinates
+            if let Some((buf_x, buf_y)) = camera.world_to_screen((global_x, global_y), area) {
+                let tile = &self.tiles[local_y][local_x];
                 let is_visible = self.visible_tiles.contains(&(global_x, global_y));
-                let is_revealed = self.revealed_tiles.contains(&(global_x, global_y));
+                let style = camera.grays_tile_if_not_visible(tile, is_visible);
 
-                if !is_visible && !is_revealed {
-                    continue;
-                }
-
-                let screen_x = global_x - camera.position.0;
-                let screen_y = global_y - camera.position.1;
-
-                if screen_x < 0
-                    || screen_x >= area.width as i32
-                    || screen_y < 0
-                    || screen_y >= area.height as i32
-                {
-                    continue;
-                }
-
-                let style = if is_visible {
-                    tile.style
-                } else {
-                    let mut revealed_style = tile.style;
-                    if let Some(fg) = revealed_style.fg {
-                        revealed_style.fg = Some(Camera::style_to_greyscale(fg));
-                    }
-                    revealed_style
-                };
-
-                let buffer_x = area.x + screen_x as u16;
-                let buffer_y = area.y + screen_y as u16;
-
-                if buffer_x >= area.right() || buffer_y >= area.bottom() {
-                    continue;
-                }
-
-                let cell = buffer.cell_mut((buffer_x, buffer_y)).unwrap();
+                let cell = buffer.cell_mut((buf_x, buf_y)).unwrap();
                 cell.set_symbol(&tile.symbol);
                 cell.set_style(style);
             }

@@ -1,8 +1,11 @@
 use std::collections::HashSet;
 
-use ratatui::{layout::Rect, style::Color};
+use ratatui::{
+    layout::Rect,
+    style::{Color, Style},
+};
 
-use crate::map::map::Map;
+use crate::map::{map::Map, tile::Tile};
 
 pub struct Camera {
     pub position: (i32, i32, i32),
@@ -73,6 +76,19 @@ impl Camera {
         }
     }
 
+    /// Style a tile depending on visibility
+    pub fn grays_tile_if_not_visible(&self, tile: &Tile, is_visible: bool) -> Style {
+        if is_visible {
+            tile.style
+        } else {
+            let mut gs = tile.style;
+            if let Some(fg) = gs.fg {
+                gs.fg = Some(Self::style_to_greyscale(fg));
+            }
+            gs
+        }
+    }
+
     pub fn get_center(&self, player_position: (i32, i32), area: Rect) -> (i32, i32) {
         (
             player_position.0 - (area.width as i32 / 2),
@@ -80,15 +96,24 @@ impl Camera {
         )
     }
 
-    /// returns true if the point is visible by the camera, false otherwise
-    pub fn is_point_on_screen(&self, positions: (i32, i32, i32), area: Rect) -> bool {
-        let screen_x = positions.0 - self.position.0;
-        let screen_y = positions.1 - self.position.1;
+    /// Convert a world position to buffer coordinates if on-screen
+    pub fn world_to_screen(&self, global: (i32, i32), area: Rect) -> Option<(u16, u16)> {
+        let screen_x = global.0 - self.position.0;
+        let screen_y = global.1 - self.position.1;
+        if screen_x < 0
+            || screen_y < 0
+            || screen_x >= area.width as i32
+            || screen_y >= area.height as i32
+        {
+            None
+        } else {
+            Some((area.x + screen_x as u16, area.y + screen_y as u16))
+        }
+    }
 
-        screen_x >= 0
-            && screen_x < area.width as i32
-            && screen_y >= 0
-            && screen_y < area.height as i32
+    /// returns true if the point is visible by the camera, false otherwise
+    pub fn is_point_on_screen(&self, global_position: (i32, i32, i32), area: Rect) -> bool {
+        self.world_to_screen((global_position.0, global_position.1), area) != None
     }
 
     /// returns true if the rect is visible by the camera, false otherwise
