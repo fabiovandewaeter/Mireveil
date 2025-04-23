@@ -182,13 +182,13 @@ impl Controller {
             }
         }
         // TODO: remove that line
-        entity.position.2 = new_z;
+        //entity.position.2 = new_z;
         map.load_around((
             new_x.div_euclid(CHUNK_SIZE as i32),
             new_y.div_euclid(CHUNK_SIZE as i32),
             new_z,
         ));
-        if let Some(tile) = map.get_tile(new_x, new_y, new_z) {
+        if let Some(tile) = map.get_tile((new_x, new_y, new_z)) {
             if !tile.solid {
                 entity.position = (new_x, new_y, new_z);
             }
@@ -344,7 +344,7 @@ impl Entity {
 
 impl Drawable for Entity {
     fn draw(&self, buffer: &mut Buffer, area: Rect, camera: &Camera, map: &Map) {
-        let on_visible_layer = self.position.2 == camera.visible_layer;
+        let on_visible_layer = self.position.2 == camera.position.2;
         let on_visible_tile = camera.is_visible_tile(self.position, map);
         // only draws if the Entity is close enough to the camera and on the visible layer
         if camera.is_point_on_screen(self.position, area) && on_visible_layer && on_visible_tile {

@@ -41,7 +41,7 @@ pub struct App {
     config: Config,
     exit: bool,
     menu: Menu,
-    camera: Camera,
+    pub camera: Camera,
 }
 
 impl App {
@@ -152,7 +152,7 @@ impl App {
                     // otherwise gets the tile
                     else if let Some(tile) =
                         self.map
-                            .get_tile(world_x, world_y, self.camera.visible_layer)
+                            .get_tile((world_x, world_y, self.camera.position.2))
                     {
                         self.menu.selected_tile_info = Some(String::from(tile.symbol));
                         self.menu.selected_entity_info = None;
@@ -170,7 +170,7 @@ impl App {
         let player_pos = self.entity_manager.player.position;
         self.camera.position.0 = player_pos.0 - (area.width as i32 / 2);
         self.camera.position.1 = player_pos.1 - (area.height as i32 / 2);
-        self.camera.visible_layer = player_pos.2;
+        self.camera.position.2 = player_pos.2;
     }
 
     fn update(&self) {}
@@ -184,7 +184,6 @@ impl App {
             .borders(Borders::NONE);
         frame.render_widget(background, area);
 
-        //let (camera_x, camera_y) = self.player.calculate_camera(area);
         let buffer = frame.buffer_mut();
 
         // draws map

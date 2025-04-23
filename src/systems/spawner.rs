@@ -88,7 +88,7 @@ impl Spawner {
         let spawn_y = base_y + offset_y;
 
         // can spawn if the tile exists and its not a solid tile
-        let can_spawn = match map.get_tile(spawn_x, spawn_y, layer) {
+        let can_spawn = match map.get_tile((spawn_x, spawn_y, layer)) {
             Some(tile) => !tile.solid,
             None => false,
         };

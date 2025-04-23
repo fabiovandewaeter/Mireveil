@@ -97,10 +97,12 @@ impl Chunk {
         }
     }
 
-    pub fn get_tile(&self, global_x: i32, global_y: i32, layer: i32) -> Option<&Tile> {
-        let (local_x, local_y) = Self::convert_to_local_chunk_coordinates(global_x, global_y);
+    /// returns the tile from global coorinates
+    pub fn get_tile(&self, global_coordinates: (i32, i32, i32)) -> Option<&Tile> {
+        let (local_x, local_y) =
+            Self::convert_to_local_chunk_coordinates(global_coordinates.0, global_coordinates.1);
         self.layers
-            .get(&layer)
+            .get(&global_coordinates.2)
             .and_then(|layer| layer.tiles.get(local_y).and_then(|row| row.get(local_x)))
     }
 
@@ -118,11 +120,7 @@ impl Chunk {
         let dimensions = (CHUNK_SIZE as i32, CHUNK_SIZE as i32);
 
         camera.is_rect_on_screen(
-            (
-                top_left_position.0,
-                top_left_position.1,
-                camera.visible_layer,
-            ),
+            (top_left_position.0, top_left_position.1, camera.position.2),
             dimensions,
             area,
         )
@@ -139,7 +137,7 @@ impl Chunk {
 
 impl Drawable for Chunk {
     fn draw(&self, buffer: &mut Buffer, area: Rect, camera: &Camera, map: &Map) {
-        if let Some(layer) = self.layers.get(&camera.visible_layer) {
+        if let Some(layer) = self.layers.get(&camera.position.2) {
             layer.draw(buffer, area, camera, map);
         }
     }
@@ -189,20 +187,23 @@ impl Map {
         }
     }
 
-    /// generates chunks around the point
-    pub fn load_around(&mut self, point: (i32, i32, i32)) {
-        for y in (point.1 - LOAD_DISTANCE)..=(point.1 + LOAD_DISTANCE) {
-            for x in (point.0 - LOAD_DISTANCE)..=(point.0 + LOAD_DISTANCE) {
-                self.load_chunk(x, y, point.2);
+    /// generates chunks around the global_coordinates
+    pub fn load_around(&mut self, global_coordinates: (i32, i32, i32)) {
+        for y in (global_coordinates.1 - LOAD_DISTANCE)..=(global_coordinates.1 + LOAD_DISTANCE) {
+            for x in (global_coordinates.0 - LOAD_DISTANCE)..=(global_coordinates.0 + LOAD_DISTANCE)
+            {
+                self.load_chunk(x, y, global_coordinates.2);
             }
         }
     }
 
-    pub fn get_tile(&self, global_x: i32, global_y: i32, layer: i32) -> Option<&Tile> {
-        let (chunk_x, chunk_y) = Self::convert_to_chunk_coordinates(global_x, global_y);
+    /// returns the tile from global coorinates
+    pub fn get_tile(&self, global_coordinates: (i32, i32, i32)) -> Option<&Tile> {
+        let (chunk_x, chunk_y) =
+            Self::convert_to_chunk_coordinates(global_coordinates.0, global_coordinates.1);
         self.chunks
             .get(&(chunk_x, chunk_y))
-            .and_then(|chunk| chunk.get_tile(global_x, global_y, layer))
+            .and_then(|chunk| chunk.get_tile(global_coordinates))
     }
 
     /// returns chunks potentially visible to the camera

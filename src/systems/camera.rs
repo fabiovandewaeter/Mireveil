@@ -9,14 +9,12 @@ use crate::map::{map::Map, tile::Tile};
 
 pub struct Camera {
     pub position: (i32, i32, i32),
-    pub visible_layer: i32,
 }
 
 impl Camera {
     pub fn new(starting_position: (i32, i32, i32)) -> Camera {
         Self {
             position: starting_position,
-            visible_layer: 0,
         }
     }
 
@@ -35,9 +33,8 @@ impl Camera {
         // updates visible tiles
         for (global_x, global_y) in visible {
             let chunk_coords = Map::convert_to_chunk_coordinates(global_x, global_y);
-
             if let Some(chunk) = map.chunks.get_mut(&chunk_coords) {
-                if let Some(layer) = chunk.layers.get_mut(&self.visible_layer) {
+                if let Some(layer) = chunk.layers.get_mut(&self.position.2) {
                     layer.visible_tiles.insert((global_x, global_y));
                     layer.revealed_tiles.insert((global_x, global_y));
                 }
@@ -147,7 +144,7 @@ impl Camera {
     pub fn is_visible_tile(&self, position: (i32, i32, i32), map: &Map) -> bool {
         let (x, y, z) = position;
         let chunk_coordinates = Map::convert_to_chunk_coordinates(x, y);
-        if z == self.visible_layer {
+        if z == self.position.2 {
             if let Some(chunk) = map.chunks.get(&chunk_coordinates) {
                 if let Some(layer) = chunk.layers.get(&z) {
                     if layer.visible_tiles.contains(&(x, y)) {
@@ -197,7 +194,7 @@ impl Camera {
             if (x, y) == target {
                 return true;
             }
-            if let Some(tile) = map.get_tile(x, y, self.visible_layer) {
+            if let Some(tile) = map.get_tile((x, y, self.position.2)) {
                 if tile.block_sight {
                     return false;
                 }

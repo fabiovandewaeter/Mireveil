@@ -66,6 +66,11 @@ impl Menu {
             format!("Player: ({}, {}, {})", x, y, z),
             Style::default().fg(Color::Cyan),
         )));
+        let (x, y, z) = app.camera.position;
+        lines.push(Line::from(Span::styled(
+            format!("Camera: ({}, {}, {})", x, y, z),
+            Style::default().fg(Color::Cyan),
+        )));
 
         // draws the informations
         if let Some(ref entity_info) = self.selected_entity_info {
