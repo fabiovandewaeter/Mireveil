@@ -37,7 +37,7 @@ impl Default for Config {
 
 pub struct App {
     map: Map,
-    entity_manager: EntityManager,
+    pub entity_manager: EntityManager,
     config: Config,
     exit: bool,
     menu: Menu,
@@ -196,7 +196,7 @@ impl App {
 
         // draws menu
         if self.menu.visible {
-            self.menu.draw(frame, area);
+            self.menu.draw(frame, area, &self);
         }
     }
 }

@@ -3,6 +3,8 @@ use ratatui::{
     widgets::{Block, Borders, Clear, Paragraph, Wrap},
 };
 
+use crate::app::App;
+
 pub struct Logger {
     pub logs: Vec<String>,
     max_displayed_logs: u8,
@@ -34,7 +36,7 @@ impl Menu {
         Rect::new(area.right() - width, area.y, width, area.height)
     }
 
-    pub fn draw(&self, frame: &mut Frame, area: Rect) {
+    pub fn draw(&self, frame: &mut Frame, area: Rect, app: &App) {
         let menu_area = self.area(area);
         // clear the menu_area
         frame.render_widget(Clear, menu_area);
@@ -57,6 +59,13 @@ impl Menu {
 
         // vector of Line that will be drawn
         let mut lines = Vec::new();
+
+        // add player coordinates at the top
+        let (x, y, z) = app.entity_manager.player.position;
+        lines.push(Line::from(Span::styled(
+            format!("Player: ({}, {}, {})", x, y, z),
+            Style::default().fg(Color::Cyan),
+        )));
 
         // draws the informations
         if let Some(ref entity_info) = self.selected_entity_info {
