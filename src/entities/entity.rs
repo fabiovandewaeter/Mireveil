@@ -8,7 +8,7 @@ use ratatui::{
 };
 
 use crate::{
-    actions::action::{Action, Attack},
+    actions::action::{Action, ActionType, AreaAttack, MeleeAttack},
     common::utils::Drawable,
     items::item::{EquipmentSlot, Item, ItemKind, WeaponData},
     map::map::{CHUNK_SIZE, Map},
@@ -82,13 +82,31 @@ impl EntityKind {
     fn actions(&self) -> Vec<Box<dyn Action>> {
         match self {
             EntityKind::Human => {
-                vec![Box::new(Attack::new(10))]
+                vec![
+                    Box::new(MeleeAttack::new("melee human", 10, ActionType::Physical)),
+                    Box::new(AreaAttack::new(
+                        "melee human",
+                        10,
+                        100,
+                        100,
+                        ActionType::Physical,
+                        0,
+                    )),
+                ]
             }
             EntityKind::Dragon => {
-                vec![Box::new(Attack::new(10))]
+                vec![Box::new(MeleeAttack::new(
+                    "melee dragon",
+                    10,
+                    ActionType::Fire,
+                ))]
             }
             EntityKind::Sheep => {
-                vec![Box::new(Attack::new(10))]
+                vec![Box::new(MeleeAttack::new(
+                    "melee sheep",
+                    10,
+                    ActionType::Physical,
+                ))]
             }
         }
     }
@@ -155,15 +173,24 @@ impl Controller {
         other_entities: &mut [&mut Entity],
         logger: &mut Logger,
     ) {
+        let mut target_was_alive = false;
         if let Some(target) = other_entities
             .iter_mut()
             .find(|e| e.position == (new_x, new_y, new_z))
         {
-            let target_was_alive = !target.is_dead();
-            // attacks the entity
-            for action in &entity.actions {
-                action.affect(entity, target, logger);
-            }
+            target_was_alive = !target.is_dead();
+        }
+        let target_coordinates = (new_x, new_y, new_z);
+
+        // attacks the entity
+        for action in &entity.actions {
+            action.affect(entity, target_coordinates, other_entities, logger);
+        }
+
+        if let Some(target) = other_entities
+            .iter_mut()
+            .find(|e| e.position == (new_x, new_y, new_z))
+        {
             // if the target is now dead
             if target_was_alive && target.is_dead() {
                 logger.push_message(format!(
