@@ -14,7 +14,6 @@ mod entities;
 mod items;
 mod map;
 mod menu;
-mod structures;
 mod systems;
 
 /// disables mouse capture even if app crash

@@ -81,6 +81,8 @@ impl Chunk {
                             Tile::new(TileKind::Wall)
                         } else if x % 32 == 1 && y % 32 == 1 {
                             Tile::new(TileKind::Water)
+                        } else if x % 32 == 2 && y % 32 == 2 {
+                            Tile::new(TileKind::Water)
                         } else {
                             Tile::new(TileKind::Grass)
                         }

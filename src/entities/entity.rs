@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use crossterm::event::KeyCode;
 use ratatui::{
     buffer::Buffer,
-    layout::{Position, Rect},
+    layout::Rect,
     style::{Color, Style},
 };
 
