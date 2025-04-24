@@ -80,8 +80,9 @@ impl Spawner {
         let chosen_kind = kinds[dist.sample(&mut rng)];
 
         // spawns around player or world spawn (0,0)
+        let player_position = entity_manager.get_player_position().unwrap_or((0, 0, 0));
         let (base_x, base_y, layer) = if self.config.spawn_around_player {
-            entity_manager.player.position
+            player_position
         } else {
             (0, 0, 0)
         };
@@ -98,7 +99,7 @@ impl Spawner {
         };
         if can_spawn
             && entity_manager
-                .find_entity_at((spawn_x, spawn_y, entity_manager.player.position.2))
+                .find_entity_at((spawn_x, spawn_y, player_position.2))
                 .is_none()
         {
             self.last_spawn = now;

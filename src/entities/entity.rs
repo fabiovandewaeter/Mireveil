@@ -181,6 +181,13 @@ impl Entity {
         self.kind.style()
     }
 
+    pub fn is_player(&self) -> bool {
+        match &self.controller {
+            Controller::Player => true,
+            _ => false,
+        }
+    }
+
     pub fn player(position: (i32, i32, i32)) -> Self {
         let god_sword = Item::new_weapon(
             "GodSword".to_string(),
@@ -200,7 +207,7 @@ impl Entity {
 
     pub fn update(
         &mut self,
-        input: Option<KeyCode>,
+        input: KeyCode,
         map: &mut Map,
         other_entities: &mut [&mut Entity],
         logger: &mut Logger,

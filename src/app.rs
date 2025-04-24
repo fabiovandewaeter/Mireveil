@@ -10,7 +10,7 @@ use ratatui::{
 use crate::{
     common::utils::Drawable,
     entities::{
-        AIbehavior::{self, ChasePlayerBehavior},
+        AIbehavior::ChasePlayerBehavior,
         controller::Controller,
         entity::{Entity, EntityKind},
     },
@@ -136,7 +136,11 @@ impl App {
                         return;
                     }
 
-                    let player_position = &self.entity_manager.player.position;
+                    //let player_position = self.entity_manager.player.position;
+                    let player_position = self
+                        .entity_manager
+                        .get_player_position()
+                        .unwrap_or((0, 0, 0));
                     let (camera_x, camera_y) = self
                         .camera
                         .get_center((player_position.0, player_position.1), screen_area);
@@ -171,10 +175,14 @@ impl App {
     }
 
     fn update_camera_position(&mut self, area: Rect) {
-        let player_pos = self.entity_manager.player.position;
-        self.camera.position.0 = player_pos.0 - (area.width as i32 / 2);
-        self.camera.position.1 = player_pos.1 - (area.height as i32 / 2);
-        self.camera.position.2 = player_pos.2;
+        //let player_pos = self.entity_manager.player.position;
+        let player_position = self
+            .entity_manager
+            .get_player_position()
+            .unwrap_or((0, 0, 0));
+        self.camera.position.0 = player_position.0 - (area.width as i32 / 2);
+        self.camera.position.1 = player_position.1 - (area.height as i32 / 2);
+        self.camera.position.2 = player_position.2;
     }
 
     fn draw(&self, frame: &mut Frame) {

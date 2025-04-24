@@ -61,7 +61,10 @@ impl Menu {
         let mut lines = Vec::new();
 
         // add player coordinates at the top
-        let (x, y, z) = app.entity_manager.player.position;
+        let (x, y, z) = app
+            .entity_manager
+            .get_player_position()
+            .unwrap_or((0, 0, 0));
         lines.push(Line::from(Span::styled(
             format!("Player: ({}, {}, {})", x, y, z),
             Style::default().fg(Color::Cyan),

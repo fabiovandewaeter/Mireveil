@@ -18,16 +18,14 @@ impl Controller {
     pub fn update_entity(
         &self,
         entity: &mut Entity,
-        input: Option<KeyCode>,
+        input: KeyCode,
         map: &mut Map,
         other_entities: &mut [&mut Entity],
         logger: &mut Logger,
     ) {
         match self {
             Controller::Player => {
-                if let Some(key_code) = input {
-                    self.handle_player_input(entity, key_code, map, other_entities, logger);
-                }
+                self.handle_player_input(entity, input, map, other_entities, logger);
             }
             Controller::AI(behavior) => {
                 behavior.update(entity, map, other_entities, logger);
