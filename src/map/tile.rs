@@ -49,10 +49,8 @@ impl TileKind {
 
 #[derive(Clone)]
 pub struct Tile {
-    kind: TileKind,
     pub symbol: &'static str,
     pub style: Style,
-    pub color: Color,
     pub solid: bool,
     pub block_sight: bool,
 }
@@ -61,14 +59,11 @@ impl Tile {
     pub fn new(kind: TileKind) -> Self {
         let symbol = kind.symbol();
         let style = kind.style();
-        let color = kind.color();
         let solid = kind.is_solid();
         let block_sight = kind.block_sight();
         Self {
-            kind,
             symbol,
             style,
-            color,
             solid,
             block_sight,
         }

@@ -34,6 +34,13 @@ pub trait Action {
         false
     }
 
+    fn can_reach(&self, source: &Entity, target_coordinates: (i32, i32, i32)) -> bool {
+        let (sx, sy, sz) = source.position;
+        let (tx, ty, tz) = target_coordinates;
+        let distance = (sx - tx).abs() + (sy - ty).abs() + (sz - tz).abs();
+        distance as u32 <= self.range()
+    }
+
     /// 1 by default
     fn range(&self) -> u32 {
         1
@@ -93,6 +100,9 @@ impl Action for MeleeAttack {
         other_entities: &mut [&mut Entity],
         logger: &mut Logger,
     ) {
+        if !self.can_reach(source, target_coordinates) {
+            return;
+        }
         if let Some(target) = other_entities
             .iter_mut()
             .find(|e| e.position == target_coordinates)
@@ -169,6 +179,10 @@ impl Action for AreaAttack {
         other_entities: &mut [&mut Entity],
         logger: &mut Logger,
     ) {
+        if !self.can_reach(source, target_coordinates) {
+            return;
+        }
+
         let area = self.get_area_of_effect(source.position, target_coordinates, &Map::default());
         let mut killed_count = 0;
         let mut affected_count = 0;

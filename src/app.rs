@@ -173,8 +173,6 @@ impl App {
         self.camera.position.2 = player_pos.2;
     }
 
-    fn update(&self) {}
-
     fn draw(&self, frame: &mut Frame) {
         let area = frame.area();
 

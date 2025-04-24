@@ -202,8 +202,7 @@ impl Controller {
                 Self::handle_xp_gain(entity, target, logger);
             }
         }
-        // TODO: remove that line
-        //entity.position.2 = new_z;
+
         map.load_around((
             new_x.div_euclid(CHUNK_SIZE as i32),
             new_y.div_euclid(CHUNK_SIZE as i32),
