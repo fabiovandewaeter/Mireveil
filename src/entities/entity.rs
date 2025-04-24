@@ -179,12 +179,11 @@ impl Controller {
             .find(|e| e.position == (new_x, new_y, new_z))
         {
             target_was_alive = !target.is_dead();
-        }
-        let target_coordinates = (new_x, new_y, new_z);
-
-        // attacks the entity
-        for action in &entity.actions {
-            action.affect(entity, target_coordinates, other_entities, logger);
+            let target_coordinates = (new_x, new_y, new_z);
+            // attacks the entity if collision
+            for action in &entity.actions {
+                action.affect(entity, target_coordinates, other_entities, logger);
+            }
         }
 
         if let Some(target) = other_entities
