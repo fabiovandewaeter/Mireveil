@@ -49,12 +49,17 @@ impl AIBehavior for ChasePlayerBehavior {
         &self,
         entity_position: (i32, i32, i32),
         _map: &Map,
-        _other_entities: &mut [&mut Entity],
+        other_entities: &mut [&mut Entity],
     ) -> (i32, i32, i32) {
-        // example : try to reach (0, 0, 0)
+        // example : try to reach player or (0, 0, 0)
         let (current_x, current_y, current_z) = entity_position;
 
-        let (target_x, target_y, target_z) = (0, 0, 0);
+        let (target_x, target_y, target_z) =
+            if let Some(player) = other_entities.iter().find(|e| e.is_player()) {
+                player.position
+            } else {
+                (0, 0, 0)
+            };
         let dx = target_x - current_x;
         let dy = target_y - current_y;
         let dz = target_z - current_z;
