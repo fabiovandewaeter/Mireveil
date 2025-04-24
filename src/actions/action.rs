@@ -1,6 +1,10 @@
 use std::collections::HashSet;
 
-use crate::{entities::entity::Entity, map::map::Map, menu::Logger};
+use crate::{
+    entities::entity::{Entity, EntityStats},
+    map::map::Map,
+    menu::Logger,
+};
 
 #[derive(Clone, Copy, PartialEq)]
 pub enum ActionType {
@@ -19,6 +23,17 @@ pub trait Action {
         other_entities: &mut [&mut Entity],
         logger: &mut Logger,
     );
+
+    /// returns true if the entity has enough mana to do the Action, and reduce its mana; otherwise returns false
+    fn handle_mana_cost(&self, source_stats: &mut EntityStats) -> bool {
+        let mana_cost = self.mana_cost();
+        if source_stats.mana >= mana_cost {
+            source_stats.mana -= mana_cost;
+            return true;
+        }
+        false
+    }
+
     /// 1 by default
     fn range(&self) -> u32 {
         1
