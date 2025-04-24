@@ -8,9 +8,10 @@ use super::{
 pub trait AIBehavior {
     fn update(
         &self,
-        entity_position: (i32, i32, i32),
+        /*entity_position: (i32, i32, i32),
         entity_stats: &mut EntityStats,
-        entity_controller: &mut Controller,
+        entity_controller: &mut Controller,*/
+        entity: &mut Entity,
         map: &mut Map,
         other_entities: &mut [&mut Entity],
         logger: &mut Logger,
@@ -39,23 +40,17 @@ pub struct ChasePlayerBehavior;
 impl AIBehavior for ChasePlayerBehavior {
     fn update(
         &self,
-        entity_position: (i32, i32, i32),
+        /*entity_position: (i32, i32, i32),
         entity_stats: &mut EntityStats,
-        entity_controller: &mut Controller,
+        entity_controller: &mut Controller,*/
+        entity: &mut Entity,
         map: &mut Map,
         other_entities: &mut [&mut Entity],
         logger: &mut Logger,
     ) {
-        let (new_x, new_y, new_z) = self.decide_movement(entity_position, map, other_entities);
-        entity_controller.handle_entity_movement(
-            entity,
-            new_x,
-            new_y,
-            new_z,
-            map,
-            other_entities,
-            logger,
-        );
+        let (new_x, new_y, new_z) = self.decide_movement(entity.position, map, other_entities);
+        let controller = entity.controller.clone();
+        controller.handle_entity_movement(entity, new_x, new_y, new_z, map, other_entities, logger);
     }
 
     fn decide_movement(
