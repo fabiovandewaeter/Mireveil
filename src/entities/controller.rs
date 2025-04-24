@@ -5,13 +5,13 @@ use crate::{
     menu::Logger,
 };
 
-use super::{AIbehavior::AiBehavior, entity::Entity};
+use super::{AIbehavior::AIBehavior, entity::Entity};
 
 /// who controls the Entity
 #[derive(Clone)]
 pub enum Controller {
     Player,
-    AI(Box<dyn AiBehavior>),
+    AI(Box<dyn AIBehavior>),
 }
 
 impl Controller {
@@ -30,7 +30,17 @@ impl Controller {
                 }
             }
             Controller::AI(behavior) => {
-                behavior.update(entity, map, other_entities);
+                let entity_position = entity.position;
+                let entity_stats = &mut entity.stats;
+                let entity_controller = &mut entity.controller;
+                behavior.update(
+                    entity_position,
+                    entity_stats,
+                    entity_controller,
+                    map,
+                    other_entities,
+                    logger,
+                );
             }
         }
     }
