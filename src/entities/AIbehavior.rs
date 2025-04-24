@@ -1,9 +1,6 @@
 use crate::{map::map::Map, menu::Logger};
 
-use super::{
-    controller::Controller,
-    entity::{Entity, EntityKind, EntityStats},
-};
+use super::entity::{Entity, EntityKind};
 
 pub trait AIBehavior {
     fn update(
@@ -50,9 +47,16 @@ impl AIBehavior for ChasePlayerBehavior {
     ) {
         let (new_x, new_y, new_z) = self.decide_movement(entity.position, map, other_entities);
         let controller = entity.controller.clone();
+        let (x, y, z) = entity.position;
         controller.handle_entity_movement(entity, new_x, new_y, new_z, map, other_entities, logger);
+        let (bx, by, bz) = entity.position;
+        logger.push_message(format!(
+            "entity moves {} {} {} | {} {} {}",
+            x, y, z, bx, by, bz
+        ));
     }
 
+    /// returns new position the entity wants to reach
     fn decide_movement(
         &self,
         entity_position: (i32, i32, i32),
@@ -63,13 +67,8 @@ impl AIBehavior for ChasePlayerBehavior {
             .iter()
             .find(|e| e.kind == EntityKind::Human && !e.is_dead());
 
-        if let Some(target) = target {
-            let dx = (target.position.0 - entity_position.0).signum();
-            let dy = (target.position.1 - entity_position.1).signum();
-            (dx, dy, 0)
-        } else {
-            (0, 0, 0)
-        }
+        let (mut new_x, mut new_y, mut new_z) = entity_position;
+        (new_x + 1, new_y, new_z)
     }
 
     fn box_clone(&self) -> Box<dyn AIBehavior> {

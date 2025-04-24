@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 
-use color_eyre::owo_colors::OwoColorize;
 use crossterm::event::KeyCode;
 use ratatui::{
     buffer::Buffer,
@@ -12,7 +11,7 @@ use crate::{
     actions::action::{Action, ActionType, AreaAttack, MeleeAttack},
     common::utils::Drawable,
     items::item::{EquipmentSlot, Item, ItemKind, WeaponData},
-    map::map::{CHUNK_SIZE, Map},
+    map::map::Map,
     menu::Logger,
     systems::{camera::Camera, level_manager::LevelManager},
 };
@@ -87,14 +86,14 @@ impl EntityKind {
             EntityKind::Human => {
                 vec![
                     Box::new(MeleeAttack::new("melee human", 10, ActionType::Physical)),
-                    Box::new(AreaAttack::new(
+                    /*Box::new(AreaAttack::new(
                         "area human",
                         10,
                         100,
                         100,
                         ActionType::Physical,
                         0,
-                    )),
+                    )),*/
                 ]
             }
             EntityKind::Dragon => {
