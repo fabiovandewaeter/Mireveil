@@ -7,7 +7,11 @@ use rand::{
 };
 
 use crate::{
-    entities::entity::{Controller, Entity, EntityKind},
+    entities::{
+        AIbehavior::ChasePlayerBehavior,
+        controller::Controller,
+        entity::{Entity, EntityKind},
+    },
     map::map::Map,
 };
 
@@ -102,7 +106,7 @@ impl Spawner {
                 chosen_kind,
                 chosen_kind.name().to_owned(),
                 (spawn_x, spawn_y, layer),
-                Controller::AI,
+                Controller::AI(Box::new(ChasePlayerBehavior)),
             );
             // only spawns the entity if there is not too many entities on the map
             if entity_manager.count_living_entities() < self.config.max_entities as u32 {

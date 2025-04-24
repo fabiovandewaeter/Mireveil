@@ -9,7 +9,11 @@ use ratatui::{
 
 use crate::{
     common::utils::Drawable,
-    entities::entity::{Controller, Entity, EntityKind},
+    entities::{
+        AIbehavior::{self, ChasePlayerBehavior},
+        controller::Controller,
+        entity::{Entity, EntityKind},
+    },
     map::map::*,
     menu::Menu,
     systems::{
@@ -51,13 +55,13 @@ impl App {
             EntityKind::Dragon,
             EntityKind::Dragon.name().to_owned(),
             (0, 1, 0),
-            Controller::AI,
+            Controller::AI(Box::new(ChasePlayerBehavior)),
         ));
         entity_manager.add_entity(Entity::new(
             EntityKind::Sheep,
             EntityKind::Sheep.name().to_owned(),
             (1, 0, 0),
-            Controller::AI,
+            Controller::AI(Box::new(ChasePlayerBehavior)),
         ));
         Self {
             map: Map::default(),
