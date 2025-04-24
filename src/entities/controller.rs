@@ -30,18 +30,7 @@ impl Controller {
                 }
             }
             Controller::AI(behavior) => {
-                /*let entity_position = entity.position;
-                let entity_stats = &mut entity.stats;
-                let entity_controller = &mut entity.controller;*/
-                behavior.update(
-                    /*entity_position,
-                    entity_stats,
-                    entity_controller,*/
-                    entity,
-                    map,
-                    other_entities,
-                    logger,
-                );
+                behavior.update(entity, map, other_entities, logger);
             }
         }
     }

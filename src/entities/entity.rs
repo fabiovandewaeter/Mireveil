@@ -8,7 +8,7 @@ use ratatui::{
 };
 
 use crate::{
-    actions::action::{Action, ActionType, AreaAttack, MeleeAttack},
+    actions::action::{Action, ActionType, MeleeAttack},
     common::utils::Drawable,
     items::item::{EquipmentSlot, Item, ItemKind, WeaponData},
     map::map::Map,
