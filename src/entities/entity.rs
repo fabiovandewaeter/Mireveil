@@ -9,7 +9,7 @@ use ratatui::{
 
 use crate::{
     actions::action::{Action, ActionType, MeleeAttack},
-    common::utils::Drawable,
+    common::{inventory::Inventory, utils::Drawable},
     items::item::{EquipmentSlot, Item, ItemKind, WeaponData},
     map::map::Map,
     menu::Logger,
@@ -33,6 +33,7 @@ impl EntityKind {
             EntityKind::Sheep => "Sheep",
         }
     }
+
     fn symbol(&self) -> &'static str {
         match self {
             EntityKind::Human => "@",
@@ -123,20 +124,6 @@ pub struct EntityStats {
     pub defense: u32,
     pub strength: u32,
     pub magic: u32,
-}
-
-struct Inventory {
-    items: Vec<Item>,
-}
-
-impl Inventory {
-    fn new() -> Self {
-        Self { items: Vec::new() }
-    }
-
-    fn add(&mut self, item: Item) {
-        self.items.push(item);
-    }
 }
 
 pub struct Entity {

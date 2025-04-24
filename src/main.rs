@@ -14,9 +14,10 @@ mod entities;
 mod items;
 mod map;
 mod menu;
+mod structures;
 mod systems;
 
-/// disable mouse capture even if app crash
+/// disables mouse capture even if app crash
 struct MouseGuard;
 
 impl MouseGuard {
