@@ -1,6 +1,6 @@
 use crate::{map::map::Map, menu::Logger};
 
-use super::entity::{Entity, EntityKind};
+use super::entity::Entity;
 
 pub trait AIBehavior {
     fn update(
@@ -49,14 +49,21 @@ impl AIBehavior for ChasePlayerBehavior {
         &self,
         entity_position: (i32, i32, i32),
         _map: &Map,
-        other_entities: &mut [&mut Entity],
+        _other_entities: &mut [&mut Entity],
     ) -> (i32, i32, i32) {
-        let target = other_entities
-            .iter()
-            .find(|e| e.kind == EntityKind::Human && !e.is_dead());
+        // example : try to reach (0, 0, 0)
+        let (current_x, current_y, current_z) = entity_position;
 
-        let (new_x, new_y, new_z) = entity_position;
-        (new_x + 1, new_y, new_z)
+        let (target_x, target_y, target_z) = (0, 0, 0);
+        let dx = target_x - current_x;
+        let dy = target_y - current_y;
+        let dz = target_z - current_z;
+
+        let step_x = dx.signum();
+        let step_y = dy.signum();
+        let step_z = dz.signum();
+
+        (current_x + step_x, current_y + step_y, current_z + step_z)
     }
 
     fn box_clone(&self) -> Box<dyn AIBehavior> {
