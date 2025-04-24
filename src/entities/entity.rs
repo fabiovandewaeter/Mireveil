@@ -237,31 +237,14 @@ impl Entity {
 
 impl Drawable for Entity {
     fn draw(&self, buffer: &mut Buffer, area: Rect, camera: &Camera, map: &Map) {
-        let on_visible_layer = self.position.2 == camera.position.2;
-        let on_visible_tile = camera.is_visible_tile(self.position, map);
-        // only draws if the Entity is close enough to the camera and on the visible layer
-        if camera.is_point_on_screen(self.position, area) && on_visible_layer && on_visible_tile {
-            let screen_x = self.position.0 - camera.position.0;
-            let screen_y = self.position.1 - camera.position.1;
+        let mut style = self.style();
+        let mut symbol = self.symbol();
 
-            let position: Position = Position {
-                x: screen_x as u16,
-                y: screen_y as u16,
-            };
-
-            let mut style = self.style();
-            let mut symbol = self.symbol();
-
-            // changes the style and symbol if the entity is dead
-            if self.is_dead() {
-                style = style.fg(Camera::style_to_greyscale(style.fg.unwrap_or(Color::Gray)));
-                symbol = "†";
-            }
-
-            if let Some(cell) = buffer.cell_mut(position) {
-                cell.set_symbol(symbol);
-                cell.set_style(style);
-            }
+        // changes the style and symbol if the entity is dead
+        if self.is_dead() {
+            style = style.fg(Camera::style_to_greyscale(style.fg.unwrap_or(Color::Gray)));
+            symbol = "†";
         }
+        camera.draw_from_global_coordinates(symbol, style, self.position, buffer, area, map);
     }
 }

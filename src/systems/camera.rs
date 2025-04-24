@@ -1,7 +1,8 @@
 use std::collections::HashSet;
 
 use ratatui::{
-    layout::Rect,
+    buffer::Buffer,
+    layout::{Position, Rect},
     style::{Color, Style},
 };
 
@@ -15,6 +16,44 @@ impl Camera {
     pub fn new(starting_position: (i32, i32, i32)) -> Camera {
         Self {
             position: starting_position,
+        }
+    }
+
+    pub fn draw_from_global_coordinates(
+        &self,
+        symbol: &str,
+        style: Style,
+        target_position: (i32, i32, i32),
+        buffer: &mut Buffer,
+        area: Rect,
+        map: &Map,
+    ) {
+        let on_visible_layer = self.position.2 == self.position.2;
+        let on_visible_tile = self.is_visible_tile(target_position, map);
+        // only draws if the symbol if is close enough to the camera and on the visible layer
+        if self.is_point_on_screen(self.position, area) && on_visible_layer && on_visible_tile {
+            let screen_x = target_position.0 - self.position.0;
+            let screen_y = target_position.1 - self.position.1;
+
+            let position: Position = Position {
+                x: screen_x as u16,
+                y: screen_y as u16,
+            };
+
+            self.draw_from_screen_coordinates(symbol, style, position, buffer);
+        }
+    }
+
+    pub fn draw_from_screen_coordinates(
+        &self,
+        symbol: &str,
+        style: Style,
+        cell_position: Position,
+        buffer: &mut Buffer,
+    ) {
+        if let Some(cell) = buffer.cell_mut(cell_position) {
+            cell.set_symbol(symbol);
+            cell.set_style(style);
         }
     }
 

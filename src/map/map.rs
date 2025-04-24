@@ -53,9 +53,12 @@ impl Drawable for Layer {
                 let is_visible = self.visible_tiles.contains(&(global_x, global_y));
                 let style = camera.grays_tile_if_not_visible(tile, is_visible);
 
-                let cell = buffer.cell_mut((buf_x, buf_y)).unwrap();
-                cell.set_symbol(&tile.symbol);
-                cell.set_style(style);
+                camera.draw_from_screen_coordinates(
+                    &tile.symbol,
+                    style,
+                    (buf_x, buf_y).into(),
+                    buffer,
+                );
             }
         }
     }
