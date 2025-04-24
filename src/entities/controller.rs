@@ -60,6 +60,7 @@ impl Controller {
         self.handle_entity_movement(entity, new_x, new_y, new_z, map, other_entities, logger);
     }
 
+    /// moves the entity and attack the entity at the new position and handle xp gain and load map around new position
     pub fn handle_entity_movement(
         &self,
         entity: &mut Entity,
@@ -70,44 +71,47 @@ impl Controller {
         other_entities: &mut [&mut Entity],
         logger: &mut Logger,
     ) {
-        let mut target_was_alive = false;
+        // if an entity is on new position, attacks it, else move to new position
         if let Some(target) = other_entities
             .iter_mut()
             .find(|e| e.position == (new_x, new_y, new_z))
         {
-            target_was_alive = !target.is_dead();
+            let target_was_alive = !target.is_dead();
 
-            let target_coordinates = (new_x, new_y, new_z);
             // attacks the entity if collision
+            let target_coordinates = (new_x, new_y, new_z);
             for action in &entity.actions {
                 if action.handle_mana_cost(&mut entity.stats) {
                     action.affect(entity, target_coordinates, other_entities, logger);
                 }
             }
-        }
 
-        if let Some(target) = other_entities
-            .iter_mut()
-            .find(|e| e.position == (new_x, new_y, new_z))
-        {
-            // if the target is now dead
-            if target_was_alive && target.is_dead() {
-                logger.push_message(format!(
-                    "{} xp needed for next level",
-                    entity.level_manager.xp_to_next_level()
-                ));
-                Self::handle_xp_gain(entity, target, logger);
+            // if collided with a living target
+            if target_was_alive {
+                if let Some(target) = other_entities
+                    .iter_mut()
+                    .find(|e| e.position == (new_x, new_y, new_z))
+                {
+                    // if the target is now dead
+                    if target_was_alive && target.is_dead() {
+                        logger.push_message(format!(
+                            "{} xp needed for next level",
+                            entity.level_manager.xp_to_next_level()
+                        ));
+                        Self::handle_xp_gain(entity, target, logger);
+                    }
+                }
             }
-        }
-
-        map.load_around((
-            new_x.div_euclid(CHUNK_SIZE as i32),
-            new_y.div_euclid(CHUNK_SIZE as i32),
-            new_z,
-        ));
-        if let Some(tile) = map.get_tile((new_x, new_y, new_z)) {
-            if !tile.solid {
-                entity.position = (new_x, new_y, new_z);
+        } else {
+            map.load_around((
+                new_x.div_euclid(CHUNK_SIZE as i32),
+                new_y.div_euclid(CHUNK_SIZE as i32),
+                new_z,
+            ));
+            if let Some(tile) = map.get_tile((new_x, new_y, new_z)) {
+                if !tile.solid {
+                    entity.position = (new_x, new_y, new_z);
+                }
             }
         }
     }

@@ -149,7 +149,7 @@ pub struct Entity {
     pub level_manager: LevelManager,
     pub actions: Vec<Box<dyn Action>>,
     pub equipment: HashMap<EquipmentSlot, Item>,
-    pub inventory: Inventory,
+    inventory: Inventory,
 }
 
 impl Entity {
