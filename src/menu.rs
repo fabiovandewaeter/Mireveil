@@ -28,6 +28,7 @@ pub struct Menu {
     pub selected_tile_info: Option<String>,
     pub selected_entity_info: Option<String>,
     pub logger: Logger,
+    pub fps: String,
 }
 
 impl Menu {
@@ -93,6 +94,11 @@ impl Menu {
             )));
         }
 
+        lines.push(Line::from(Span::styled(
+            format!("FPS: {}", app.fps_counter.get_fps()),
+            Style::default().fg(Color::Gray),
+        )));
+
         // separator
         lines.push(Line::from("────────────".dim()));
 
@@ -125,6 +131,7 @@ impl Default for Menu {
             selected_tile_info: None,
             selected_entity_info: None,
             logger: Logger::new(),
+            fps: "".to_string(),
         }
     }
 }

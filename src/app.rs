@@ -46,6 +46,7 @@ pub struct App {
     exit: bool,
     menu: Menu,
     pub camera: Camera,
+    pub fps_counter: FpsCounter,
 }
 
 impl App {
@@ -70,6 +71,7 @@ impl App {
             exit: false,
             menu: Menu::default(),
             camera: Camera::new((0, 0, 0)),
+            fps_counter: FpsCounter::default(),
         }
     }
 
@@ -77,11 +79,14 @@ impl App {
         let spawner_config = SpawnerConfiguration::default();
         let mut spawner = Spawner::new(spawner_config);
         while !self.exit {
+            self.fps_counter.update();
+
             self.handle_events()?;
             let (cols, rows) = crossterm::terminal::size()?;
             self.update_camera_position(Rect::new(0, 0, cols, rows));
             //self.update();
             spawner.try_spawn(&mut self.entity_manager, &self.map);
+
             terminal.draw(|f| self.draw(f))?;
         }
         Ok(())
@@ -207,5 +212,27 @@ impl App {
         if self.menu.visible {
             self.menu.draw(frame, area, &self);
         }
+    }
+}
+
+#[derive(Default)]
+pub struct FpsCounter {
+    last_instant: Option<std::time::Instant>,
+    current_fps: f64,
+}
+
+impl FpsCounter {
+    pub fn update(&mut self) {
+        let now = std::time::Instant::now();
+        if let Some(last) = self.last_instant {
+            let delta = now.duration_since(last).as_secs_f64();
+            // Lissage exponentiel pour une lecture plus stable
+            self.current_fps = 0.9 * self.current_fps + 0.1 * (1.0 / delta);
+        }
+        self.last_instant = Some(now);
+    }
+
+    pub fn get_fps(&self) -> String {
+        format!("{:.1}", self.current_fps)
     }
 }
