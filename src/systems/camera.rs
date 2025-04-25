@@ -6,10 +6,7 @@ use ratatui::{
     style::{Color, Style},
 };
 
-use crate::{
-    common::utils::Drawable,
-    map::{map::Map, tile::Tile},
-};
+use crate::{common::utils::Drawable, map::map::Map};
 
 pub struct Camera {
     pub position: (i32, i32, i32),
@@ -117,22 +114,9 @@ impl Camera {
         }
     }
 
-    /*/// styles a tile depending on visibility
-    pub fn grays_if_not_visible(&self, tile: &Tile, is_visible: bool) -> Style {
-        if is_visible {
-            tile.style
-        } else {
-            let mut gs = tile.style;
-            if let Some(fg) = gs.fg {
-                gs.fg = Some(Self::grayed_out_color(fg));
-            }
-            gs
-        }
-    }*/
-
-    /// styles a drawable object depending on visibility
-    pub fn grayed_out_style<T: Drawable>(drawable_object: &T) -> Style {
-        let mut style = drawable_object.style();
+    /// returns a grayed-out version of the Style foreground
+    pub fn grayed_out_style(style: Style) -> Style {
+        let mut style = style;
         if let Some(fg) = style.fg {
             style.fg = Some(Self::grayed_out_color(fg));
         }

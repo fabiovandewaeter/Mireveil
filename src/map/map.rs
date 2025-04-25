@@ -5,7 +5,7 @@ use ratatui::{buffer::Buffer, layout::Rect};
 use crate::{common::utils::Drawable, systems::camera::Camera};
 
 use super::{
-    structures::structure::Chest,
+    structures::structure::{self, Chest},
     tile::{Tile, TileKind},
 };
 
@@ -33,9 +33,7 @@ impl Layer {
             revealed_tiles: HashSet::new(),
         }
     }
-}
 
-impl Drawable for Layer {
     fn draw(&self, buffer: &mut Buffer, area: Rect, camera: &Camera, _map: &Map) {
         let (chunk_world_x, chunk_world_y) = self.position;
 
@@ -61,10 +59,10 @@ impl Drawable for Layer {
                         tile.style()
                     } else {
                         // Apply grayscale to tile style
-                        Camera::grayed_out_style(tile)
+                        Camera::grayed_out_style(tile.style())
                     };
                     camera.draw_from_screen_coordinates(
-                        &tile.symbol,
+                        &tile.symbol(),
                         style,
                         (buf_x, buf_y).into(),
                         buffer,
@@ -76,7 +74,7 @@ impl Drawable for Layer {
                             structure.style()
                         } else {
                             // Apply grayscale to structure style
-                            Camera::grayed_out_style(structure)
+                            Camera::grayed_out_style(structure.style())
                         };
 
                         camera.draw_from_screen_coordinates(
@@ -168,9 +166,7 @@ impl Chunk {
             global_y.rem_euclid(CHUNK_SIZE as i32) as usize,
         )
     }
-}
 
-impl Drawable for Chunk {
     fn draw(&self, buffer: &mut Buffer, area: Rect, camera: &Camera, map: &Map) {
         if let Some(layer) = self.layers.get(&camera.position.2) {
             layer.draw(buffer, area, camera, map);
@@ -260,6 +256,14 @@ impl Map {
             global_y.div_euclid(CHUNK_SIZE as i32),
         )
     }
+
+    /// draws the tiles of the map only for the visible layer
+    pub fn draw(&self, buffer: &mut Buffer, area: Rect, camera: &Camera, map: &Map) {
+        let visibile_chunks = self.get_visible_chunks(area, camera);
+        for chunk in visibile_chunks {
+            chunk.draw(buffer, area, camera, map);
+        }
+    }
 }
 
 impl Default for Map {
@@ -272,15 +276,5 @@ impl Default for Map {
             }
         }
         map
-    }
-}
-
-impl Drawable for Map {
-    /// draws the tiles of the map only for the visible layer
-    fn draw(&self, buffer: &mut Buffer, area: Rect, camera: &Camera, map: &Map) {
-        let visibile_chunks = self.get_visible_chunks(area, camera);
-        for chunk in visibile_chunks {
-            chunk.draw(buffer, area, camera, map);
-        }
     }
 }

@@ -38,18 +38,12 @@ pub struct Tile {
     pub kind: TileKind,
     /// the structure on the tile
     pub structure: Option<Box<dyn Structure>>,
-    pub symbol: &'static str,
-    pub style: Style,
 }
 
 impl Tile {
     pub fn new(kind: TileKind) -> Self {
-        let symbol = kind.symbol();
-        let style = kind.style();
         Self {
             structure: None,
-            symbol,
-            style,
             kind,
         }
     }
@@ -79,10 +73,8 @@ impl Tile {
         }
         false
     }
-}
 
-impl Drawable for Tile {
-    fn draw(
+    pub fn draw(
         &self,
         buffer: &mut ratatui::prelude::Buffer,
         area: ratatui::prelude::Rect,
@@ -99,15 +91,17 @@ impl Drawable for Tile {
             );
         } else {
             // Draw the tile itself if no structure
-            camera.draw_from_screen_coordinates(&self.symbol, self.style(), area.into(), buffer);
+            camera.draw_from_screen_coordinates(&self.symbol(), self.style(), area.into(), buffer);
         }
     }
+}
 
+impl Drawable for Tile {
     fn symbol(&self) -> &'static str {
         if let Some(structure) = &self.structure {
             structure.symbol()
         } else {
-            self.symbol
+            self.kind.symbol()
         }
     }
 
@@ -115,7 +109,7 @@ impl Drawable for Tile {
         if let Some(structure) = &self.structure {
             structure.color()
         } else {
-            self.style.fg.unwrap_or(Color::Reset)
+            self.kind.style().fg.unwrap_or(Color::Reset)
         }
     }
 
@@ -123,7 +117,7 @@ impl Drawable for Tile {
         if let Some(structure) = &self.structure {
             structure.style()
         } else {
-            self.style
+            self.kind.style()
         }
     }
 }

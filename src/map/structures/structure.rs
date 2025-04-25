@@ -1,13 +1,11 @@
-use ratatui::style::{Color, Style};
+use ratatui::style::Color;
 
-use crate::{common::inventory::Inventory, menu::Logger};
+use crate::{
+    common::{inventory::Inventory, utils::Drawable},
+    menu::Logger,
+};
 
-pub trait Structure {
-    fn symbol(&self) -> &'static str;
-    fn color(&self) -> Color;
-    fn style(&self) -> Style {
-        Style::default().fg(self.color())
-    }
+pub trait Structure: Drawable {
     fn block_sight(&self) -> bool; // Bloque le mouvement?
     fn interact(&mut self, logger: &mut Logger); // Retourne un message si interaction
 }
@@ -27,16 +25,8 @@ impl Chest {
 }
 
 impl Structure for Chest {
-    fn symbol(&self) -> &'static str {
-        "c"
-    }
-
-    fn color(&self) -> Color {
-        Color::Rgb(95, 65, 33)
-    }
-
     fn block_sight(&self) -> bool {
-        true
+        false
     }
 
     fn interact(&mut self, logger: &mut Logger) {
@@ -44,9 +34,27 @@ impl Structure for Chest {
     }
 }
 
+impl Drawable for Chest {
+    fn symbol(&self) -> &'static str {
+        "c"
+    }
+
+    fn color(&self) -> Color {
+        Color::Rgb(95, 65, 33)
+    }
+}
+
 pub struct Wall {}
 
 impl Structure for Wall {
+    fn block_sight(&self) -> bool {
+        true
+    }
+
+    fn interact(&mut self, logger: &mut Logger) {}
+}
+
+impl Drawable for Wall {
     fn symbol(&self) -> &'static str {
         "#"
     }
@@ -54,10 +62,4 @@ impl Structure for Wall {
     fn color(&self) -> Color {
         Color::Rgb(150, 150, 150)
     }
-
-    fn block_sight(&self) -> bool {
-        true
-    }
-
-    fn interact(&mut self, logger: &mut Logger) {}
 }

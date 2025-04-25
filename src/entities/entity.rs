@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 
-use color_eyre::owo_colors::OwoColorize;
 use crossterm::event::KeyCode;
 use ratatui::{
     buffer::Buffer,
@@ -249,10 +248,8 @@ impl Entity {
             None
         }
     }
-}
 
-impl Drawable for Entity {
-    fn draw(&self, buffer: &mut Buffer, area: Rect, camera: &Camera, map: &Map) {
+    pub fn draw(&self, buffer: &mut Buffer, area: Rect, camera: &Camera, map: &Map) {
         let on_visible_layer = self.position.2 == camera.position.2;
         let on_visible_tile = camera.is_visible_tile(self.position, map);
         // only draws if the Entity is close enough to the camera and on the visible layer
@@ -271,17 +268,16 @@ impl Drawable for Entity {
             // changes the style and symbol if the entity is dead
             if self.is_dead() {
                 //style = style.fg(Camera::style_to_greyscale(style.fg.unwrap_or(Color::Gray)));
-                style = Camera::grayed_out_style(self);
+                style = Camera::grayed_out_style(self.style());
                 symbol = "†";
             }
 
-            if let Some(cell) = buffer.cell_mut(position) {
-                cell.set_symbol(symbol);
-                cell.set_style(style);
-            }
+            camera.draw_from_screen_coordinates(symbol, style, position, buffer);
         }
     }
+}
 
+impl Drawable for Entity {
     fn symbol(&self) -> &'static str {
         self.kind.symbol()
     }

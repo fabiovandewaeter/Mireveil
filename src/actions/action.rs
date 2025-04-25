@@ -1,6 +1,7 @@
 use std::collections::HashSet;
 
 use crate::{
+    common::utils::Drawable,
     entities::entity::{Entity, EntityStats},
     map::map::Map,
     menu::Logger,

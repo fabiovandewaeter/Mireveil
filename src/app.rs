@@ -162,7 +162,7 @@ impl App {
                         self.map
                             .get_tile((world_x, world_y, self.camera.position.2))
                     {
-                        self.menu.selected_tile_info = Some(String::from(tile.symbol));
+                        self.menu.selected_tile_info = Some(String::from(tile.symbol()));
                         self.menu.selected_entity_info = None;
                     } else {
                         self.menu.selected_tile_info = None;
