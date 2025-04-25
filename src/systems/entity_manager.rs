@@ -39,7 +39,7 @@ impl EntityManager {
 
             current.update(key_code, map, other_entities.as_mut_slice(), logger);
             if current.is_player() {
-                camera.update_visibility(current.position, 100, map);
+                camera.update_visibility(current.position, 50, map);
             }
         }
 
