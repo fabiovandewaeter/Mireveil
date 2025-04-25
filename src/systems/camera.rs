@@ -6,7 +6,10 @@ use ratatui::{
     style::{Color, Style},
 };
 
-use crate::map::{map::Map, tile::Tile};
+use crate::{
+    common::utils::Drawable,
+    map::{map::Map, tile::Tile},
+};
 
 pub struct Camera {
     pub position: (i32, i32, i32),
@@ -104,7 +107,7 @@ impl Camera {
     }
 
     /// returns a grayed-out version of the RGB color
-    pub fn style_to_greyscale(color: Color) -> Color {
+    pub fn grayed_out_color(color: Color) -> Color {
         match color {
             Color::Rgb(r, g, b) => {
                 let grey = ((r as u16 + g as u16 + b as u16) / 3) as u8;
@@ -114,17 +117,26 @@ impl Camera {
         }
     }
 
-    /// styles a tile depending on visibility
-    pub fn grays_tile_if_not_visible(&self, tile: &Tile, is_visible: bool) -> Style {
+    /*/// styles a tile depending on visibility
+    pub fn grays_if_not_visible(&self, tile: &Tile, is_visible: bool) -> Style {
         if is_visible {
             tile.style
         } else {
             let mut gs = tile.style;
             if let Some(fg) = gs.fg {
-                gs.fg = Some(Self::style_to_greyscale(fg));
+                gs.fg = Some(Self::grayed_out_color(fg));
             }
             gs
         }
+    }*/
+
+    /// styles a drawable object depending on visibility
+    pub fn grayed_out_style<T: Drawable>(drawable_object: &T) -> Style {
+        let mut style = drawable_object.style();
+        if let Some(fg) = style.fg {
+            style.fg = Some(Self::grayed_out_color(fg));
+        }
+        style
     }
 
     /// retuns the camera coordinates so that the center is pointed at the player
@@ -234,7 +246,7 @@ impl Camera {
                 return true;
             }
             if let Some(tile) = map.get_tile((x, y, self.position.2)) {
-                if tile.block_sight {
+                if tile.block_sight() {
                     return false;
                 }
             } else {

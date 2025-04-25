@@ -1,6 +1,7 @@
 use crossterm::event::KeyCode;
 
 use crate::{
+    common::utils::Drawable,
     map::map::{CHUNK_SIZE, Map},
     menu::Logger,
 };
@@ -107,7 +108,7 @@ impl Controller {
                 new_z,
             ));
             if let Some(tile) = map.get_tile((new_x, new_y, new_z)) {
-                if !tile.solid {
+                if tile.is_walkable() {
                     entity.position = (new_x, new_y, new_z);
                 }
             }

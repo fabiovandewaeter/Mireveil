@@ -4,7 +4,10 @@ use ratatui::{buffer::Buffer, layout::Rect};
 
 use crate::{common::utils::Drawable, systems::camera::Camera};
 
-use super::tile::{Tile, TileKind};
+use super::{
+    structures::structure::Chest,
+    tile::{Tile, TileKind},
+};
 
 /// size in tiles
 pub const CHUNK_SIZE: u16 = 32;
@@ -51,14 +54,39 @@ impl Drawable for Layer {
             if let Some((buf_x, buf_y)) = camera.world_to_screen((global_x, global_y), area) {
                 let tile = &self.tiles[local_y][local_x];
                 let is_visible = self.visible_tiles.contains(&(global_x, global_y));
-                let style = camera.grays_tile_if_not_visible(tile, is_visible);
+                // Draw the tile first if no structure is present
+                if tile.structure.is_none() {
+                    //let style = Camera::grayed_out_style(tile, is_visible);
+                    let style = if is_visible {
+                        tile.style()
+                    } else {
+                        // Apply grayscale to tile style
+                        Camera::grayed_out_style(tile)
+                    };
+                    camera.draw_from_screen_coordinates(
+                        &tile.symbol,
+                        style,
+                        (buf_x, buf_y).into(),
+                        buffer,
+                    );
+                } else {
+                    // If there's a structure, draw it instead of the tile
+                    if let Some(structure) = &tile.structure {
+                        let style = if is_visible {
+                            structure.style()
+                        } else {
+                            // Apply grayscale to structure style
+                            Camera::grayed_out_style(structure)
+                        };
 
-                camera.draw_from_screen_coordinates(
-                    &tile.symbol,
-                    style,
-                    (buf_x, buf_y).into(),
-                    buffer,
-                );
+                        camera.draw_from_screen_coordinates(
+                            structure.symbol(),
+                            style,
+                            (buf_x, buf_y).into(),
+                            buffer,
+                        );
+                    }
+                }
             }
         }
     }
@@ -78,7 +106,9 @@ impl Chunk {
                 (0..CHUNK_SIZE)
                     .map(|y| {
                         if x % 32 == 0 && y % 32 == 0 {
-                            Tile::new(TileKind::Wall)
+                            let mut tile = Tile::new(TileKind::Grass);
+                            tile.add_structure(Box::new(Chest::new()));
+                            tile
                         } else if x % 32 == 1 && y % 32 == 1 {
                             Tile::new(TileKind::Water)
                         } else if x % 32 == 2 && y % 32 == 2 {
@@ -176,7 +206,10 @@ impl Map {
                     (0..CHUNK_SIZE)
                         .map(|x| {
                             if x == 0 && y == 0 {
-                                Tile::new(TileKind::Wall)
+                                //Tile::new(TileKind::Wall)
+                                let mut tile = Tile::new(TileKind::Grass);
+                                tile.add_structure(Box::new(Chest::new()));
+                                tile
                             } else if x == 1 && y == 1 {
                                 Tile::new(TileKind::Water)
                             } else {

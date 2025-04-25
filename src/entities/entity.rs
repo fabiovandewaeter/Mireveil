@@ -1,15 +1,16 @@
 use std::collections::HashMap;
 
+use color_eyre::owo_colors::OwoColorize;
 use crossterm::event::KeyCode;
 use ratatui::{
     buffer::Buffer,
-    layout::Rect,
+    layout::{Position, Rect},
     style::{Color, Style},
 };
 
 use crate::{
     actions::action::{Action, ActionType, MeleeAttack},
-    common::{inventory::Inventory, utils::Drawable},
+    common::utils::Drawable,
     items::item::{EquipmentSlot, Item, ItemKind, WeaponData},
     map::map::Map,
     menu::Logger,
@@ -33,12 +34,19 @@ impl EntityKind {
             EntityKind::Sheep => "Sheep",
         }
     }
-
     fn symbol(&self) -> &'static str {
         match self {
             EntityKind::Human => "@",
             EntityKind::Dragon => "D",
             EntityKind::Sheep => "S",
+        }
+    }
+
+    fn color(&self) -> Color {
+        match self {
+            EntityKind::Human => Color::Rgb(255, 255, 255),
+            EntityKind::Dragon => Color::Rgb(255, 0, 0),
+            EntityKind::Sheep => Color::Rgb(255, 209, 223),
         }
     }
 
@@ -126,6 +134,20 @@ pub struct EntityStats {
     pub magic: u32,
 }
 
+struct Inventory {
+    items: Vec<Item>,
+}
+
+impl Inventory {
+    fn new() -> Self {
+        Self { items: Vec::new() }
+    }
+
+    fn add(&mut self, item: Item) {
+        self.items.push(item);
+    }
+}
+
 pub struct Entity {
     pub kind: EntityKind,
     pub name: String,
@@ -160,14 +182,6 @@ impl Entity {
         }
     }
 
-    pub fn symbol(&self) -> &'static str {
-        self.kind.symbol()
-    }
-
-    pub fn style(&self) -> Style {
-        self.kind.style()
-    }
-
     pub fn is_player(&self) -> bool {
         match &self.controller {
             Controller::Player => true,
@@ -188,6 +202,8 @@ impl Entity {
             position,
             Controller::Player,
         );
+        player.stats.max_hp = 1000000;
+        player.stats.hp = 1000000;
         player.equip_item(god_sword);
         player
     }
@@ -237,14 +253,44 @@ impl Entity {
 
 impl Drawable for Entity {
     fn draw(&self, buffer: &mut Buffer, area: Rect, camera: &Camera, map: &Map) {
-        let mut style = self.style();
-        let mut symbol = self.symbol();
+        let on_visible_layer = self.position.2 == camera.position.2;
+        let on_visible_tile = camera.is_visible_tile(self.position, map);
+        // only draws if the Entity is close enough to the camera and on the visible layer
+        if camera.is_point_on_screen(self.position, area) && on_visible_layer && on_visible_tile {
+            let screen_x = self.position.0 - camera.position.0;
+            let screen_y = self.position.1 - camera.position.1;
 
-        // changes the style and symbol if the entity is dead
-        if self.is_dead() {
-            style = style.fg(Camera::style_to_greyscale(style.fg.unwrap_or(Color::Gray)));
-            symbol = "†";
+            let position: Position = Position {
+                x: screen_x as u16,
+                y: screen_y as u16,
+            };
+
+            let mut style = self.kind.style();
+            let mut symbol = self.kind.symbol();
+
+            // changes the style and symbol if the entity is dead
+            if self.is_dead() {
+                //style = style.fg(Camera::style_to_greyscale(style.fg.unwrap_or(Color::Gray)));
+                style = Camera::grayed_out_style(self);
+                symbol = "†";
+            }
+
+            if let Some(cell) = buffer.cell_mut(position) {
+                cell.set_symbol(symbol);
+                cell.set_style(style);
+            }
         }
-        camera.draw_from_global_coordinates(symbol, style, self.position, buffer, area, map);
+    }
+
+    fn symbol(&self) -> &'static str {
+        self.kind.symbol()
+    }
+
+    fn color(&self) -> Color {
+        self.kind.color()
+    }
+
+    fn style(&self) -> Style {
+        self.kind.style()
     }
 }

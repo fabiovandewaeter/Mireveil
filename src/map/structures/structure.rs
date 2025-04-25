@@ -1,5 +1,3 @@
-use std::fmt::format;
-
 use ratatui::style::{Color, Style};
 
 use crate::{common::inventory::Inventory, menu::Logger};
@@ -20,7 +18,7 @@ pub struct Chest {
 }
 
 impl Chest {
-    fn new() -> Self {
+    pub fn new() -> Self {
         Self {
             inventory: Inventory::new(),
             is_open: false,
@@ -61,7 +59,5 @@ impl Structure for Wall {
         true
     }
 
-    fn interact(&mut self, logger: &mut Logger) {
-        todo!()
-    }
+    fn interact(&mut self, logger: &mut Logger) {}
 }

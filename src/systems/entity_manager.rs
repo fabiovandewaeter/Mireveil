@@ -97,10 +97,8 @@ impl EntityManager {
             None
         }
     }
-}
 
-impl Drawable for EntityManager {
-    fn draw(&self, buffer: &mut Buffer, area: Rect, camera: &Camera, map: &Map) {
+    pub fn draw(&self, buffer: &mut Buffer, area: Rect, camera: &Camera, map: &Map) {
         for entity in self.entities.iter() {
             entity.draw(buffer, area, camera, map);
         }
