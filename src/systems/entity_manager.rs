@@ -39,7 +39,7 @@ impl EntityManager {
 
             current.update(key_code, map, other_entities.as_mut_slice(), logger);
             if current.is_player() {
-                camera.update_visibility(current.position, 50, map);
+                camera.update_visibility(current.position, 100, map);
             }
         }
 
@@ -99,11 +99,11 @@ impl EntityManager {
     }
 
     pub fn draw(&self, buffer: &mut Buffer, area: Rect, camera: &Camera, map: &Map) {
-        for entity in self.entities.iter() {
-            entity.draw(buffer, area, camera, map);
-        }
         for dead_entity in self.dead_entities.iter() {
             dead_entity.draw(buffer, area, camera, map);
+        }
+        for entity in self.entities.iter() {
+            entity.draw(buffer, area, camera, map);
         }
     }
 }

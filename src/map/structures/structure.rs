@@ -6,8 +6,16 @@ use crate::{
 };
 
 pub trait Structure: Drawable {
-    fn block_sight(&self) -> bool; // Bloque le mouvement?
-    fn interact(&mut self, logger: &mut Logger); // Retourne un message si interaction
+    /// true by default
+    fn block_sight(&self) -> bool {
+        true
+    }
+
+    /// false by default
+    fn walkable(&self) -> bool {
+        false
+    }
+    fn interact(&mut self, logger: &mut Logger);
 }
 
 pub struct Chest {
@@ -47,16 +55,48 @@ impl Drawable for Chest {
 pub struct Wall {}
 
 impl Structure for Wall {
-    fn block_sight(&self) -> bool {
-        true
-    }
-
     fn interact(&mut self, logger: &mut Logger) {}
 }
 
 impl Drawable for Wall {
     fn symbol(&self) -> &'static str {
         "#"
+    }
+
+    fn color(&self) -> Color {
+        Color::Rgb(150, 150, 150)
+    }
+}
+
+pub struct Door {
+    is_open: bool,
+}
+
+impl Structure for Door {
+    fn block_sight(&self) -> bool {
+        self.is_open
+    }
+
+    fn walkable(&self) -> bool {
+        self.is_open
+    }
+
+    fn interact(&mut self, logger: &mut Logger) {
+        if self.is_open {
+            logger.push_message(format!("close door"));
+        } else {
+            logger.push_message(format!("open door"));
+        }
+        self.is_open = !self.is_open
+    }
+}
+
+impl Drawable for Door {
+    fn symbol(&self) -> &'static str {
+        if self.is_open {
+            return "=";
+        }
+        "|"
     }
 
     fn color(&self) -> Color {
