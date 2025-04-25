@@ -1,6 +1,8 @@
+use std::fmt::format;
+
 use ratatui::style::{Color, Style};
 
-use crate::common::inventory::Inventory;
+use crate::{common::inventory::Inventory, menu::Logger};
 
 pub trait Structure {
     fn symbol(&self) -> &'static str;
@@ -9,7 +11,7 @@ pub trait Structure {
         Style::default().fg(self.color())
     }
     fn block_sight(&self) -> bool; // Bloque le mouvement?
-    fn interact(&mut self) -> Option<String>; // Retourne un message si interaction
+    fn interact(&mut self, logger: &mut Logger); // Retourne un message si interaction
 }
 
 pub struct Chest {
@@ -39,8 +41,8 @@ impl Structure for Chest {
         true
     }
 
-    fn interact(&mut self) -> Option<String> {
-        todo!()
+    fn interact(&mut self, logger: &mut Logger) {
+        logger.push_message(format!("open the chest"));
     }
 }
 
@@ -59,7 +61,7 @@ impl Structure for Wall {
         true
     }
 
-    fn interact(&mut self) -> Option<String> {
+    fn interact(&mut self, logger: &mut Logger) {
         todo!()
     }
 }
