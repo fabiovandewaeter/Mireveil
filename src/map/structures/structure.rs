@@ -72,9 +72,15 @@ pub struct Door {
     is_open: bool,
 }
 
+impl Door {
+    pub fn new() -> Self {
+        Self { is_open: false }
+    }
+}
+
 impl Structure for Door {
     fn block_sight(&self) -> bool {
-        self.is_open
+        !self.is_open
     }
 
     fn walkable(&self) -> bool {
@@ -87,7 +93,7 @@ impl Structure for Door {
         } else {
             logger.push_message(format!("open door"));
         }
-        self.is_open = !self.is_open
+        self.is_open = !self.is_open;
     }
 }
 
@@ -100,6 +106,6 @@ impl Drawable for Door {
     }
 
     fn color(&self) -> Color {
-        Color::Rgb(150, 150, 150)
+        Color::Rgb(95, 65, 33)
     }
 }

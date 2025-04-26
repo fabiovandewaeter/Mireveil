@@ -11,7 +11,7 @@ use crate::{
     actions::action::{Action, ActionType, MeleeAttack},
     common::utils::Drawable,
     items::item::{EquipmentSlot, Item, ItemKind, WeaponData},
-    map::map::Map,
+    map::map::{Direction, Map},
     menu::Logger,
     systems::{camera::Camera, level_manager::LevelManager},
 };
@@ -158,6 +158,8 @@ pub struct Entity {
     pub actions: Vec<Box<dyn Action>>,
     pub equipment: HashMap<EquipmentSlot, Item>,
     inventory: Inventory,
+    /// where the Entity is looking at
+    pub direction: Direction,
 }
 
 impl Entity {
@@ -178,6 +180,7 @@ impl Entity {
             kind,
             equipment: HashMap::new(),
             inventory: Inventory::new(),
+            direction: Direction::North,
         }
     }
 

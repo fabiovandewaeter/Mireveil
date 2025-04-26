@@ -5,7 +5,7 @@ use ratatui::{buffer::Buffer, layout::Rect};
 use crate::{common::utils::Drawable, systems::camera::Camera};
 
 use super::{
-    structures::structure::{self, Chest},
+    structures::structure::{Chest, Door},
     tile::{Tile, TileKind},
 };
 
@@ -13,6 +13,25 @@ use super::{
 pub const CHUNK_SIZE: u16 = 32;
 /// distance in chunk chunks are loaded
 pub const LOAD_DISTANCE: i32 = 2;
+
+pub enum Direction {
+    North,
+    East,
+    South,
+    West,
+}
+
+impl Direction {
+    pub fn coordinates_in_front(&self, position: (i32, i32, i32)) -> (i32, i32, i32) {
+        let (x, y, z) = position;
+        match self {
+            Direction::North => (x, y - 1, z),
+            Direction::East => (x + 1, y, z),
+            Direction::South => (x, y + 1, z),
+            Direction::West => (x - 1, y, z),
+        }
+    }
+}
 
 /// layers are squares of CHUNK_SIZE*CHUNK_SIZE tiles
 pub struct Layer {
@@ -110,7 +129,9 @@ impl Chunk {
                         } else if x % 32 == 1 && y % 32 == 1 {
                             Tile::new(TileKind::Water)
                         } else if x % 32 == 2 && y % 32 == 2 {
-                            Tile::new(TileKind::Water)
+                            let mut tile = Tile::new(TileKind::Grass);
+                            tile.add_structure(Box::new(Door::new()));
+                            tile
                         } else {
                             Tile::new(TileKind::Grass)
                         }
@@ -137,6 +158,20 @@ impl Chunk {
         self.layers
             .get(&global_coordinates.2)
             .and_then(|layer| layer.tiles.get(local_y).and_then(|row| row.get(local_x)))
+    }
+
+    /// returns the tile from global coorinates
+    pub fn get_tile_mut(&mut self, global_coordinates: (i32, i32, i32)) -> Option<&mut Tile> {
+        let (local_x, local_y) =
+            Self::convert_to_local_chunk_coordinates(global_coordinates.0, global_coordinates.1);
+        self.layers
+            .get_mut(&global_coordinates.2)
+            .and_then(|layer| {
+                layer
+                    .tiles
+                    .get_mut(local_y)
+                    .and_then(|row| row.get_mut(local_x))
+            })
     }
 
     /// returns global coordinates for left corner of the chunk
@@ -238,6 +273,15 @@ impl Map {
         self.chunks
             .get(&(chunk_x, chunk_y))
             .and_then(|chunk| chunk.get_tile(global_coordinates))
+    }
+
+    /// returns the tile from global coorinates
+    pub fn get_tile_mut(&mut self, global_coordinates: (i32, i32, i32)) -> Option<&mut Tile> {
+        let (chunk_x, chunk_y) =
+            Self::convert_to_chunk_coordinates(global_coordinates.0, global_coordinates.1);
+        self.chunks
+            .get_mut(&(chunk_x, chunk_y))
+            .and_then(|chunk| chunk.get_tile_mut(global_coordinates))
     }
 
     /// returns chunks potentially visible to the camera

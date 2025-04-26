@@ -94,7 +94,7 @@ impl Spawner {
 
         // can spawn if the tile exists and its not a solid tile
         let can_spawn = match map.get_tile((spawn_x, spawn_y, layer)) {
-            Some(tile) => tile.is_walkable(),
+            Some(tile) => tile.walkable(),
             None => false,
         };
         if can_spawn

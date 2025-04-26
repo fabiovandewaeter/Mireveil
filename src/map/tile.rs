@@ -48,10 +48,10 @@ impl Tile {
         }
     }
 
-    pub fn is_walkable(&self) -> bool {
+    pub fn walkable(&self) -> bool {
         // not walkable if there is a structure on the tile
-        if let Some(_) = &self.structure {
-            return false;
+        if let Some(structure) = &self.structure {
+            return structure.walkable();
         }
         self.kind.is_walkable()
     }

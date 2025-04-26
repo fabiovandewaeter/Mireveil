@@ -111,7 +111,7 @@ impl App {
         if key.kind == KeyEventKind::Press {
             match key.code {
                 KeyCode::Char('q') => self.exit = true,
-                KeyCode::Char('e') => self.menu.visible = !self.menu.visible, // Toggle inventaire
+                KeyCode::Char('f') => self.menu.visible = !self.menu.visible, // Toggle inventaire
                 _ => self.entity_manager.update(
                     key.code,
                     &self.camera,

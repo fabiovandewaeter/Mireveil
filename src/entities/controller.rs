@@ -2,7 +2,7 @@ use crossterm::event::KeyCode;
 
 use crate::{
     common::utils::Drawable,
-    map::map::{CHUNK_SIZE, Map},
+    map::map::{CHUNK_SIZE, Direction, Map},
     menu::Logger,
 };
 
@@ -34,6 +34,7 @@ impl Controller {
         }
     }
 
+    /// moves the player and changes his direction
     fn handle_player_input(
         &self,
         entity: &mut Entity,
@@ -42,11 +43,45 @@ impl Controller {
         other_entities: &mut [&mut Entity],
         logger: &mut Logger,
     ) {
+        match key_code {
+            KeyCode::Char('e') => {
+                let coordinates_tile_entity_looks_at =
+                    entity.direction.coordinates_in_front(entity.position);
+                logger.push_message(format!(
+                    "{} {} {}",
+                    coordinates_tile_entity_looks_at.0,
+                    coordinates_tile_entity_looks_at.1,
+                    coordinates_tile_entity_looks_at.2
+                ));
+                if let Some(tile_entity_looks_at) =
+                    map.get_tile_mut(coordinates_tile_entity_looks_at)
+                {
+                    if let Some(structure) = tile_entity_looks_at.structure.as_mut() {
+                        structure.interact(logger);
+                    }
+                }
+            }
+            _ => {}
+        }
+
+        // handles movements
         let (dx, dy, dz) = match key_code {
-            KeyCode::Up => (0, -1, 0),
-            KeyCode::Down => (0, 1, 0),
-            KeyCode::Left => (-1, 0, 0),
-            KeyCode::Right => (1, 0, 0),
+            KeyCode::Up => {
+                entity.direction = Direction::North;
+                (0, -1, 0)
+            }
+            KeyCode::Down => {
+                entity.direction = Direction::South;
+                (0, 1, 0)
+            }
+            KeyCode::Left => {
+                entity.direction = Direction::West;
+                (-1, 0, 0)
+            }
+            KeyCode::Right => {
+                entity.direction = Direction::East;
+                (1, 0, 0)
+            }
             KeyCode::Char('y') => (0, 0, 1),
             KeyCode::Char('u') => (0, 0, -1),
             _ => (0, 0, 0),
@@ -108,7 +143,7 @@ impl Controller {
                 new_z,
             ));
             if let Some(tile) = map.get_tile((new_x, new_y, new_z)) {
-                if tile.is_walkable() {
+                if tile.walkable() {
                     entity.position = (new_x, new_y, new_z);
                 }
             }
