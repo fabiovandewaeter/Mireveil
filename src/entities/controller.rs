@@ -66,45 +66,45 @@ impl Controller {
 
         // handles movements
         let (dx, dy, dz) = match key_code {
-            KeyCode::Up => {
-                entity.direction = Direction::North;
-                (0, -1, 0)
-            }
-            KeyCode::Down => {
-                entity.direction = Direction::South;
-                (0, 1, 0)
-            }
-            KeyCode::Left => {
-                entity.direction = Direction::West;
-                (-1, 0, 0)
-            }
-            KeyCode::Right => {
-                entity.direction = Direction::East;
-                (1, 0, 0)
-            }
+            KeyCode::Up => (0, -1, 0),
+            KeyCode::Down => (0, 1, 0),
+            KeyCode::Left => (-1, 0, 0),
+            KeyCode::Right => (1, 0, 0),
             KeyCode::Char('y') => (0, 0, 1),
             KeyCode::Char('u') => (0, 0, -1),
             _ => (0, 0, 0),
         };
 
-        let new_x = entity.position.0 + dx;
-        let new_y = entity.position.1 + dy;
-        let new_z = entity.position.2 + dz;
-
-        self.handle_entity_movement(entity, new_x, new_y, new_z, map, other_entities, logger);
+        self.handle_entity_movement(entity, dx, dy, dz, map, other_entities, logger);
     }
 
-    /// moves the entity and attack the entity at the new position and handle xp gain and load map around new position
+    /// moves the entity, changes its direction and attack the entity at the new position by adding the delta in the 3 directions, and handle xp gain and load map around new position
     pub fn handle_entity_movement(
         &self,
         entity: &mut Entity,
-        new_x: i32,
-        new_y: i32,
-        new_z: i32,
+        dx: i32,
+        dy: i32,
+        dz: i32,
         map: &mut Map,
         other_entities: &mut [&mut Entity],
         logger: &mut Logger,
     ) {
+        // changes direction of the entity
+        if dy < 0 {
+            entity.direction = Direction::North;
+        } else if dy > 0 {
+            entity.direction = Direction::South;
+        }
+        if dx < 0 {
+            entity.direction = Direction::West;
+        } else if dx > 0 {
+            entity.direction = Direction::East;
+        }
+
+        let new_x = entity.position.0 + dx;
+        let new_y = entity.position.1 + dy;
+        let new_z = entity.position.2 + dz;
+
         // if an entity is on new position, attacks it, else move to new position
         if let Some(target) = other_entities
             .iter_mut()

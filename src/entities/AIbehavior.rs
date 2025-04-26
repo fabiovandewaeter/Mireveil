@@ -39,12 +39,12 @@ impl AIBehavior for ChasePlayerBehavior {
         other_entities: &mut [&mut Entity],
         logger: &mut Logger,
     ) {
-        let (new_x, new_y, new_z) = self.decide_movement(entity.position, map, other_entities);
+        let (dx, dy, dz) = self.decide_movement(entity.position, map, other_entities);
         let controller = entity.controller.clone();
-        controller.handle_entity_movement(entity, new_x, new_y, new_z, map, other_entities, logger);
+        controller.handle_entity_movement(entity, dx, dy, dz, map, other_entities, logger);
     }
 
-    /// returns new position the entity wants to reach
+    /// returns delta of coordinates
     fn decide_movement(
         &self,
         entity_position: (i32, i32, i32),
@@ -68,7 +68,7 @@ impl AIBehavior for ChasePlayerBehavior {
         let step_y = dy.signum();
         let step_z = dz.signum();
 
-        (current_x + step_x, current_y + step_y, current_z + step_z)
+        (step_x, step_y, step_z)
     }
 
     fn box_clone(&self) -> Box<dyn AIBehavior> {
