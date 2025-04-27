@@ -1,8 +1,8 @@
 use ratatui::style::{Color, Style};
 
-use crate::{common::utils::Drawable, menu::Logger};
+use crate::{common::utils::Drawable, entities::entity::Entity, menu::Logger};
 
-use super::structures::structure::Structure;
+use super::{map::Map, structures::structure::Structure};
 
 #[derive(Clone)]
 pub enum TileKind {
@@ -57,9 +57,15 @@ impl Tile {
     }
 
     /// interacts with the structure on the tile
-    pub fn interact(&mut self, logger: &mut Logger) {
+    fn interact(
+        &mut self,
+        entity: &mut Entity,
+        map: &mut Map,
+        other_entities: &mut [&mut Entity],
+        logger: &mut Logger,
+    ) {
         if let Some(structure) = &mut self.structure {
-            structure.interact(logger);
+            structure.interact(entity, map, other_entities, logger);
         }
     }
 

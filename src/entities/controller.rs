@@ -57,7 +57,7 @@ impl Controller {
                     map.get_tile_mut(coordinates_tile_entity_looks_at)
                 {
                     if let Some(structure) = tile_entity_looks_at.structure.as_mut() {
-                        structure.interact(logger);
+                        structure.interact(entity, map, other_entities, logger);
                     }
                 }
             }

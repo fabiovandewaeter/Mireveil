@@ -2,6 +2,8 @@ use ratatui::style::Color;
 
 use crate::{
     common::{inventory::Inventory, utils::Drawable},
+    entities::entity::Entity,
+    map::map::Map,
     menu::Logger,
 };
 
@@ -15,7 +17,14 @@ pub trait Structure: Drawable {
     fn walkable(&self) -> bool {
         false
     }
-    fn interact(&mut self, logger: &mut Logger);
+
+    fn interact(
+        &mut self,
+        entity: &mut Entity,
+        map: &mut Map,
+        other_entities: &mut [&mut Entity],
+        logger: &mut Logger,
+    );
 }
 
 pub struct Chest {
@@ -37,7 +46,13 @@ impl Structure for Chest {
         false
     }
 
-    fn interact(&mut self, logger: &mut Logger) {
+    fn interact(
+        &mut self,
+        entity: &mut Entity,
+        map: &mut Map,
+        other_entities: &mut [&mut Entity],
+        logger: &mut Logger,
+    ) {
         logger.push_message(format!("open the chest"));
     }
 }
@@ -55,7 +70,14 @@ impl Drawable for Chest {
 pub struct Wall {}
 
 impl Structure for Wall {
-    fn interact(&mut self, logger: &mut Logger) {}
+    fn interact(
+        &mut self,
+        entity: &mut Entity,
+        map: &mut Map,
+        other_entities: &mut [&mut Entity],
+        logger: &mut Logger,
+    ) {
+    }
 }
 
 impl Drawable for Wall {
@@ -87,7 +109,13 @@ impl Structure for Door {
         self.is_open
     }
 
-    fn interact(&mut self, logger: &mut Logger) {
+    fn interact(
+        &mut self,
+        entity: &mut Entity,
+        map: &mut Map,
+        other_entities: &mut [&mut Entity],
+        logger: &mut Logger,
+    ) {
         if self.is_open {
             logger.push_message(format!("close door"));
         } else {
@@ -103,6 +131,48 @@ impl Drawable for Door {
             return "=";
         }
         "|"
+    }
+
+    fn color(&self) -> Color {
+        Color::Rgb(95, 65, 33)
+    }
+}
+
+pub struct Stairs {
+    goes_up: bool,
+}
+
+impl Stairs {
+    pub fn new(goes_up: bool) -> Self {
+        Self { goes_up }
+    }
+}
+
+impl Structure for Stairs {
+    fn block_sight(&self) -> bool {
+        false
+    }
+
+    fn walkable(&self) -> bool {
+        true
+    }
+
+    fn interact(
+        &mut self,
+        entity: &mut Entity,
+        map: &mut Map,
+        other_entities: &mut [&mut Entity],
+        logger: &mut Logger,
+    ) {
+        let dz = if self.goes_up { 1 } else { -1 };
+        let controller = entity.controller.clone();
+        controller.handle_entity_movement(entity, 0, 0, dz, map, other_entities, logger);
+    }
+}
+
+impl Drawable for Stairs {
+    fn symbol(&self) -> &'static str {
+        if self.goes_up { "<" } else { ">" }
     }
 
     fn color(&self) -> Color {
